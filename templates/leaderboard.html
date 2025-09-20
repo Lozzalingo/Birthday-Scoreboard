@@ -4,7 +4,8 @@
 
 {% block nav_buttons %}
 <div class="nav-buttons">
-    <a href="/scan" class="btn btn-primary">📱 Join Game</a>
+    <a href="/scan" class="btn btn-primary" id="join-btn">📱 Join Game</a>
+    <a href="/join" class="btn btn-secondary" id="team-controls-btn" style="display: none;">⚙️ My Team</a>
 </div>
 {% endblock %}
 
@@ -33,6 +34,13 @@
 {% block scripts %}
 <script>
     const socket = io();
+    let playerTeamId = sessionStorage.getItem('teamId');
+
+    // Check if user already has a team
+    if (playerTeamId) {
+        document.getElementById('join-btn').style.display = 'none';
+        document.getElementById('team-controls-btn').style.display = 'inline-block';
+    }
 
     socket.on('connect', function() {
         document.getElementById('connection-status').innerHTML = '🟢 Live';

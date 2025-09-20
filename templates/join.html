@@ -25,7 +25,13 @@
     </div>
 
     <div class="player-controls" id="player-controls" style="display: none;">
-        <h3>🎯 Your Controls</h3>
+        <div class="controls-header">
+            <h3>🎯 Your Controls</h3>
+            <div class="view-toggle">
+                <button id="view-leaderboard-btn" class="btn btn-secondary">📊 View Leaderboard</button>
+                <button id="view-controls-btn" class="btn btn-primary" style="display: none;">⚙️ Edit Team</button>
+            </div>
+        </div>
 
         <div class="control-group">
             <label for="current-team-name">Team Name:</label>
@@ -73,8 +79,9 @@
         socket.emit('request_leaderboard');
 
         if (playerTeamId) {
+            console.log('Found existing team ID:', playerTeamId);
             showPlayerControls();
-            socket.emit('get_team_data', {team_id: playerTeamId});
+            socket.emit('get_team_data', {team_id: parseInt(playerTeamId)});
         }
     });
 
@@ -95,9 +102,10 @@
     });
 
     socket.on('team_data', function(data) {
-        if (data.team_id === playerTeamId) {
+        if (data.team_id == playerTeamId) { // Use == for type coercion
             document.getElementById('current-team-name').value = data.team_name;
             document.getElementById('current-score').value = data.score;
+            console.log('Team data loaded:', data);
         }
     });
 
@@ -106,6 +114,19 @@
     });
 
     socket.on('error', function(data) {
+        console.log('Error received:', data.message);
+
+        // If team not found, clear session and show join form
+        if (data.message === 'Team not found') {
+            sessionStorage.removeItem('teamId');
+            playerTeamId = null;
+            document.getElementById('join-form').style.display = 'block';
+            document.getElementById('player-controls').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+            alert('Your team was deleted by an admin. Please join again.');
+            return;
+        }
+
         // Reset submit button
         const submitButton = document.querySelector('#join-form button[type="submit"]');
         if (submitButton) {
@@ -172,6 +193,17 @@
         document.getElementById('join-form').style.display = 'none';
         document.getElementById('player-controls').style.display = 'block';
     }
+
+    // Toggle between leaderboard and controls view
+    document.getElementById('view-leaderboard-btn').addEventListener('click', function() {
+        window.location.href = '/';
+    });
+
+    // Future: Add edit mode toggle if needed
+    document.getElementById('view-controls-btn').addEventListener('click', function() {
+        // Show controls, hide leaderboard (if we implement inline view)
+        alert('Controls are already visible on this page!');
+    });
 
     function updateJoinMiniLeaderboard(teams) {
         const miniLeaderboard = document.getElementById('join-mini-leaderboard');
