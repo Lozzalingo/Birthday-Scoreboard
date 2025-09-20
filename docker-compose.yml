@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  birthday-scoreboard:
+    build: .
+    container_name: birthday-scoreboard
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # Using port 8080 to avoid conflicts
+    volumes:
+      - ./data:/app/data  # Persist database
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/api/stats', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - scoreboard-network
+
+networks:
+  scoreboard-network:
+    driver: bridge
+
+volumes:
+  scoreboard-data:
+    driver: local

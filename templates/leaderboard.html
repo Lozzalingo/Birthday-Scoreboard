@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Live Leaderboard - Birthday Scoreboard{% endblock %}
+
+{% block nav_buttons %}
+<div class="nav-buttons">
+    <a href="/scan" class="btn btn-primary">📱 Join Game</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="leaderboard-container">
+    <div class="leaderboard-header">
+        <h2>🏆 Live Leaderboard</h2>
+        <div class="game-status">
+            <span class="status-indicator" id="connection-status">🔴 Connecting...</span>
+        </div>
+    </div>
+
+    <div class="leaderboard" id="leaderboard">
+        <div class="leaderboard-entry header">
+            <div class="rank">Rank</div>
+            <div class="team-name">Team Name</div>
+            <div class="score">Score</div>
+        </div>
+        <div class="no-teams" id="no-teams">
+            <p>🎯 No teams yet! Scan the QR code to join the game.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+
+    socket.on('connect', function() {
+        document.getElementById('connection-status').innerHTML = '🟢 Live';
+        socket.emit('request_leaderboard');
+    });
+
+    socket.on('disconnect', function() {
+        document.getElementById('connection-status').innerHTML = '🔴 Disconnected';
+    });
+
+    socket.on('leaderboard_update', function(data) {
+        updateLeaderboard(data.teams);
+    });
+
+    function updateLeaderboard(teams) {
+        const leaderboard = document.getElementById('leaderboard');
+        const noTeams = document.getElementById('no-teams');
+
+        // Clear existing entries except header
+        const entries = leaderboard.querySelectorAll('.leaderboard-entry:not(.header)');
+        entries.forEach(entry => entry.remove());
+
+        if (teams.length === 0) {
+            noTeams.style.display = 'block';
+        } else {
+            noTeams.style.display = 'none';
+
+            // Sort teams by score (descending)
+            teams.sort((a, b) => b.score - a.score);
+
+            teams.forEach((team, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'leaderboard-entry';
+                entry.innerHTML = `
+                    <div class="rank">${getRankDisplay(index + 1)}</div>
+                    <div class="team-name">${escapeHtml(team.name)}</div>
+                    <div class="score">${formatScore(team.score)}</div>
+                `;
+                leaderboard.appendChild(entry);
+            });
+        }
+    }
+
+    function getRankDisplay(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return rank;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

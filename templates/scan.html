@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Scan to Join - Birthday Scoreboard{% endblock %}
+
+{% block nav_buttons %}
+<div class="nav-buttons">
+    <a href="/" class="btn btn-secondary">📊 View Leaderboard</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="scan-container">
+    <div class="leaderboard-section">
+        <h2>🏆 Live Leaderboard</h2>
+        <div class="mini-leaderboard" id="mini-leaderboard">
+            <div class="no-teams" id="no-teams-mini">
+                <p>🎯 No teams yet!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="qr-section">
+        <h2>📱 Scan to Join</h2>
+        <div class="qr-container">
+            <div class="qr-code">
+                <img src="{{ url_for('qr_code') }}" alt="QR Code to join game" id="qr-image">
+            </div>
+            <p class="qr-instructions">
+                Scan this QR code with your phone to join the game instantly!
+            </p>
+            <div class="manual-link">
+                <p>Or visit: <a href="{{ join_url }}" target="_blank">{{ join_url }}</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+
+    socket.on('connect', function() {
+        socket.emit('request_leaderboard');
+    });
+
+    socket.on('leaderboard_update', function(data) {
+        updateMiniLeaderboard(data.teams);
+    });
+
+    function updateMiniLeaderboard(teams) {
+        const miniLeaderboard = document.getElementById('mini-leaderboard');
+        const noTeamsMini = document.getElementById('no-teams-mini');
+
+        // Clear existing entries
+        miniLeaderboard.innerHTML = '';
+
+        if (teams.length === 0) {
+            miniLeaderboard.appendChild(noTeamsMini);
+        } else {
+            // Sort teams by score (descending)
+            teams.sort((a, b) => b.score - a.score);
+
+            teams.slice(0, 10).forEach((team, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'mini-entry';
+                entry.innerHTML = `
+                    <span class="mini-rank">${getRankDisplay(index + 1)}</span>
+                    <span class="mini-name">${escapeHtml(team.name)}</span>
+                    <span class="mini-score">${formatScore(team.score)}</span>
+                `;
+                miniLeaderboard.appendChild(entry);
+            });
+        }
+    }
+
+    function getRankDisplay(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return rank;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

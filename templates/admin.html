@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Birthday Scoreboard{% endblock %}
+
+{% block nav_buttons %}
+<div class="nav-buttons">
+    <a href="/" class="btn btn-secondary">📊 View Leaderboard</a>
+    <button id="clear-all-btn" class="btn btn-danger">🗑️ Clear All Teams</button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h2>⚙️ Admin Panel</h2>
+        <div class="admin-stats">
+            <span id="team-count">0 teams</span>
+            <span class="status-indicator" id="admin-connection-status">🔴 Connecting...</span>
+        </div>
+    </div>
+
+    <div class="admin-controls">
+        <div class="control-section">
+            <h3>🎮 Game Controls</h3>
+            <div class="control-buttons">
+                <button id="refresh-btn" class="btn btn-primary">🔄 Refresh Data</button>
+                <button id="export-btn" class="btn btn-secondary">📊 Export Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="teams-table-container">
+        <h3>👥 Teams Management</h3>
+        <div class="table-wrapper">
+            <table class="teams-table" id="teams-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Team Name</th>
+                        <th>Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="teams-tbody">
+                    <tr class="no-data">
+                        <td colspan="4">No teams yet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ Edit Team</h3>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="edit-form">
+                <input type="hidden" id="edit-team-id">
+                <div class="form-group">
+                    <label for="edit-team-name">Team Name:</label>
+                    <input type="text" id="edit-team-name" required maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="edit-team-score">Score:</label>
+                    <input type="number" id="edit-team-score" required min="0" step="0.5">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+    let teams = [];
+
+    socket.on('connect', function() {
+        document.getElementById('admin-connection-status').innerHTML = '🟢 Live';
+        socket.emit('request_leaderboard');
+    });
+
+    socket.on('disconnect', function() {
+        document.getElementById('admin-connection-status').innerHTML = '🔴 Disconnected';
+    });
+
+    socket.on('leaderboard_update', function(data) {
+        teams = data.teams;
+        updateAdminTable(teams);
+        updateStats(teams);
+    });
+
+    socket.on('team_deleted', function(data) {
+        socket.emit('request_leaderboard');
+    });
+
+    socket.on('error', function(data) {
+        alert('Error: ' + data.message);
+    });
+
+    function updateAdminTable(teams) {
+        const tbody = document.getElementById('teams-tbody');
+        tbody.innerHTML = '';
+
+        if (teams.length === 0) {
+            const row = document.createElement('tr');
+            row.className = 'no-data';
+            row.innerHTML = '<td colspan="4">No teams yet</td>';
+            tbody.appendChild(row);
+        } else {
+            teams.forEach(team => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${team.id}</td>
+                    <td class="editable-name" data-team-id="${team.id}">${escapeHtml(team.name)}</td>
+                    <td class="editable-score" data-team-id="${team.id}">${formatScore(team.score)}</td>
+                    <td class="actions">
+                        <button class="btn btn-small btn-primary" onclick="editTeam(${team.id}, '${escapeHtml(team.name)}', ${team.score})">✏️ Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteTeam(${team.id})">🗑️ Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    }
+
+    function updateStats(teams) {
+        document.getElementById('team-count').textContent = `${teams.length} team${teams.length !== 1 ? 's' : ''}`;
+    }
+
+    function editTeam(teamId, teamName, score) {
+        document.getElementById('edit-team-id').value = teamId;
+        document.getElementById('edit-team-name').value = teamName;
+        document.getElementById('edit-team-score').value = score;
+        document.getElementById('edit-modal').style.display = 'block';
+    }
+
+    function deleteTeam(teamId) {
+        if (confirm('Are you sure you want to delete this team?')) {
+            socket.emit('delete_team', {team_id: teamId});
+        }
+    }
+
+    function clearAllTeams() {
+        if (confirm('Are you sure you want to delete ALL teams? This cannot be undone!')) {
+            socket.emit('clear_all_teams');
+        }
+    }
+
+    function exportData() {
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + "Team Name,Score\n"
+            + teams.map(team => `"${team.name}",${team.score}`).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `leaderboard_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Event listeners
+    document.getElementById('refresh-btn').addEventListener('click', function() {
+        socket.emit('request_leaderboard');
+    });
+
+    document.getElementById('clear-all-btn').addEventListener('click', clearAllTeams);
+    document.getElementById('export-btn').addEventListener('click', exportData);
+
+    // Modal handling
+    document.getElementById('edit-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const teamId = document.getElementById('edit-team-id').value;
+        const teamName = document.getElementById('edit-team-name').value.trim();
+        const score = parseFloat(document.getElementById('edit-team-score').value);
+
+        if (teamName) {
+            socket.emit('admin_update_team', {
+                team_id: teamId,
+                team_name: teamName,
+                score: score
+            });
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+    });
+
+    // Close modal events
+    document.querySelector('.close').addEventListener('click', function() {
+        document.getElementById('edit-modal').style.display = 'none';
+    });
+
+    document.querySelector('.close-modal').addEventListener('click', function() {
+        document.getElementById('edit-modal').style.display = 'none';
+    });
+
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('edit-modal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

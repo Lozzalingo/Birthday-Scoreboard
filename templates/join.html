@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Join Game - Birthday Scoreboard{% endblock %}
+
+{% block content %}
+<div class="join-container">
+    <div class="join-form-section">
+        <h2>🎮 Join the Game</h2>
+
+        <div class="form-container">
+            <form id="join-form" class="join-form">
+                <div class="form-group">
+                    <label for="team-name">Team Name:</label>
+                    <input type="text" id="team-name" name="team-name" required maxlength="50"
+                           placeholder="Enter your team name">
+                </div>
+                <button type="submit" class="btn btn-primary btn-large">🚀 Join Game</button>
+            </form>
+        </div>
+
+        <div id="success-message" class="success-message" style="display: none;">
+            <h3>🎉 Welcome to the game!</h3>
+            <p>You've successfully joined. You can now update your score and team name below.</p>
+        </div>
+    </div>
+
+    <div class="player-controls" id="player-controls" style="display: none;">
+        <h3>🎯 Your Controls</h3>
+
+        <div class="control-group">
+            <label for="current-team-name">Team Name:</label>
+            <div class="input-group">
+                <input type="text" id="current-team-name" maxlength="50">
+                <button id="update-name-btn" class="btn btn-secondary">Update</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="current-score">Score:</label>
+            <div class="input-group">
+                <input type="number" id="current-score" min="0" step="0.5">
+                <button id="update-score-btn" class="btn btn-primary">Update</button>
+            </div>
+        </div>
+
+        <div class="quick-score-buttons">
+            <button class="btn btn-small" onclick="addToScore(0.5)">+0.5</button>
+            <button class="btn btn-small" onclick="addToScore(1)">+1</button>
+            <button class="btn btn-small" onclick="addToScore(5)">+5</button>
+            <button class="btn btn-small" onclick="addToScore(10)">+10</button>
+            <button class="btn btn-small btn-danger" onclick="addToScore(-0.5)">-0.5</button>
+            <button class="btn btn-small btn-danger" onclick="addToScore(-1)">-1</button>
+        </div>
+    </div>
+
+    <div class="mini-leaderboard-section">
+        <h3>🏆 Current Standings</h3>
+        <div class="mini-leaderboard" id="join-mini-leaderboard">
+            <div class="no-teams">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+    let playerTeamId = sessionStorage.getItem('teamId');
+
+    socket.on('connect', function() {
+        socket.emit('request_leaderboard');
+
+        if (playerTeamId) {
+            showPlayerControls();
+            socket.emit('get_team_data', {team_id: playerTeamId});
+        }
+    });
+
+    socket.on('team_joined', function(data) {
+        playerTeamId = data.team_id;
+        sessionStorage.setItem('teamId', playerTeamId);
+        document.getElementById('current-team-name').value = data.team_name;
+        document.getElementById('current-score').value = data.score;
+
+        // Reset submit button
+        const submitButton = document.querySelector('#join-form button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = '🚀 Join Game';
+        }
+
+        showSuccessAndControls();
+    });
+
+    socket.on('team_data', function(data) {
+        if (data.team_id === playerTeamId) {
+            document.getElementById('current-team-name').value = data.team_name;
+            document.getElementById('current-score').value = data.score;
+        }
+    });
+
+    socket.on('leaderboard_update', function(data) {
+        updateJoinMiniLeaderboard(data.teams);
+    });
+
+    socket.on('error', function(data) {
+        // Reset submit button
+        const submitButton = document.querySelector('#join-form button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = '🚀 Join Game';
+        }
+
+        alert('Error: ' + data.message);
+    });
+
+    document.getElementById('join-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const teamName = document.getElementById('team-name').value.trim();
+        const submitButton = e.target.querySelector('button[type="submit"]');
+
+        if (teamName) {
+            // Disable button and show loading
+            submitButton.disabled = true;
+            submitButton.textContent = '⏳ Joining...';
+
+            socket.emit('join_game', {team_name: teamName});
+
+            // Re-enable after 5 seconds as fallback
+            setTimeout(() => {
+                if (submitButton.disabled) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = '🚀 Join Game';
+                }
+            }, 5000);
+        }
+    });
+
+    document.getElementById('update-name-btn').addEventListener('click', function() {
+        const newName = document.getElementById('current-team-name').value.trim();
+        if (newName && playerTeamId) {
+            socket.emit('update_team_name', {team_id: playerTeamId, team_name: newName});
+        }
+    });
+
+    document.getElementById('update-score-btn').addEventListener('click', function() {
+        const newScore = parseFloat(document.getElementById('current-score').value);
+        if (!isNaN(newScore) && newScore >= 0 && playerTeamId) {
+            socket.emit('update_score', {team_id: playerTeamId, score: newScore});
+        }
+    });
+
+    function addToScore(points) {
+        const currentScore = parseFloat(document.getElementById('current-score').value) || 0;
+        const newScore = Math.max(0, currentScore + points);
+        document.getElementById('current-score').value = newScore;
+
+        if (playerTeamId) {
+            socket.emit('update_score', {team_id: playerTeamId, score: newScore});
+        }
+    }
+
+    function showSuccessAndControls() {
+        document.getElementById('join-form').style.display = 'none';
+        document.getElementById('success-message').style.display = 'block';
+        document.getElementById('player-controls').style.display = 'block';
+    }
+
+    function showPlayerControls() {
+        document.getElementById('join-form').style.display = 'none';
+        document.getElementById('player-controls').style.display = 'block';
+    }
+
+    function updateJoinMiniLeaderboard(teams) {
+        const miniLeaderboard = document.getElementById('join-mini-leaderboard');
+        miniLeaderboard.innerHTML = '';
+
+        if (teams.length === 0) {
+            const noTeams = document.createElement('div');
+            noTeams.className = 'no-teams';
+            noTeams.innerHTML = '<p>No teams yet!</p>';
+            miniLeaderboard.appendChild(noTeams);
+        } else {
+            teams.sort((a, b) => b.score - a.score);
+
+            teams.slice(0, 5).forEach((team, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'mini-entry';
+                if (team.id === playerTeamId) {
+                    entry.classList.add('highlight');
+                }
+                entry.innerHTML = `
+                    <span class="mini-rank">${getRankDisplay(index + 1)}</span>
+                    <span class="mini-name">${escapeHtml(team.name)}</span>
+                    <span class="mini-score">${formatScore(team.score)}</span>
+                `;
+                miniLeaderboard.appendChild(entry);
+            });
+        }
+    }
+
+    function getRankDisplay(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return rank;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}
