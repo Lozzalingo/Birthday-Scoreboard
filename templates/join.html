@@ -73,7 +73,8 @@
 {% block scripts %}
 <script>
     const socket = io();
-    let playerTeamId = sessionStorage.getItem('teamId');
+    // Use localStorage instead of sessionStorage to share across tabs
+    let playerTeamId = localStorage.getItem('teamId');
 
     socket.on('connect', function() {
         socket.emit('request_leaderboard');
@@ -85,9 +86,18 @@
         }
     });
 
+    // On page load, check if user already has a team and redirect/show controls immediately
+    window.addEventListener('load', function() {
+        if (playerTeamId) {
+            // Hide join form immediately
+            document.getElementById('join-form').style.display = 'none';
+            document.getElementById('player-controls').style.display = 'block';
+        }
+    });
+
     socket.on('team_joined', function(data) {
         playerTeamId = data.team_id;
-        sessionStorage.setItem('teamId', playerTeamId);
+        localStorage.setItem('teamId', playerTeamId);
         document.getElementById('current-team-name').value = data.team_name;
         document.getElementById('current-score').value = data.score;
 
@@ -118,7 +128,7 @@
 
         // If team not found, clear session and show join form
         if (data.message === 'Team not found') {
-            sessionStorage.removeItem('teamId');
+            localStorage.removeItem('teamId');
             playerTeamId = null;
             document.getElementById('join-form').style.display = 'block';
             document.getElementById('player-controls').style.display = 'none';
@@ -139,6 +149,14 @@
 
     document.getElementById('join-form').addEventListener('submit', function(e) {
         e.preventDefault();
+
+        // Check if user already has a team (from another tab)
+        if (localStorage.getItem('teamId')) {
+            alert('You already have a team! Use the "My Team" button to manage it.');
+            window.location.href = '/';
+            return;
+        }
+
         const teamName = document.getElementById('team-name').value.trim();
         const submitButton = e.target.querySelector('button[type="submit"]');
 

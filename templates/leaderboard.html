@@ -34,7 +34,7 @@
 {% block scripts %}
 <script>
     const socket = io();
-    let playerTeamId = sessionStorage.getItem('teamId');
+    let playerTeamId = localStorage.getItem('teamId');
 
     // Check if user already has a team
     if (playerTeamId) {
