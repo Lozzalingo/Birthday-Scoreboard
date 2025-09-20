@@ -68,9 +68,7 @@ body::before {
     background: var(--dark-bg);
     border-bottom: var(--border-width) solid var(--border-color);
     padding: 1rem 0;
-    position: sticky;
-    top: 0;
-    z-index: 999;
+    position: relative;
     box-shadow: var(--clean-shadow);
 }
 
@@ -111,7 +109,7 @@ body::before {
 .main-content {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 1rem;
+    padding: 0.5rem;
     position: relative;
 }
 
@@ -393,6 +391,7 @@ body::before {
     padding: 1rem;
     position: relative;
     box-shadow: var(--clean-shadow);
+    margin-bottom: 1rem;
 }
 
 .qr-section {
@@ -541,10 +540,11 @@ body::before {
     border-radius: 8px;
     padding: 1rem;
     box-shadow: var(--clean-shadow);
+    margin-bottom: 1rem;
 }
 
 .form-container {
-    margin: 2rem 0;
+    margin: 1rem 0;
 }
 
 .join-form {
@@ -599,22 +599,22 @@ body::before {
 
 .success-message {
     text-align: center;
-    padding: 2rem;
+    padding: 1rem;
     background: linear-gradient(45deg, rgba(220, 20, 60, 0.2), rgba(0, 191, 255, 0.1));
     border: var(--border-width) solid var(--primary-color);
     color: var(--text-color);
     font-family: 'Press Start 2P', monospace;
     border-radius: 8px;
     box-shadow: var(--clean-shadow);
-    margin: 2rem 0;
+    margin: 1rem 0;
     font-size: 10px;
     text-shadow: var(--text-shadow);
 }
 
 
 .player-controls {
-    margin-top: 2rem;
-    padding: 2rem;
+    margin-top: 1rem;
+    padding: 1rem;
     background: rgba(0, 191, 255, 0.1);
     border: var(--border-width) solid var(--secondary-color);
     border-radius: 8px;
@@ -622,7 +622,7 @@ body::before {
 }
 
 .control-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .control-group label {
@@ -701,11 +701,13 @@ body::before {
 
 /* Admin Page - Control Terminal */
 .admin-container {
-    background: rgba(0, 8, 17, 0.95);
-    border: 1px solid var(--red-alert);
-    clip-path: polygon(20px 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
-    padding: 2rem;
+    background: var(--dark-bg);
+    border: var(--border-width) solid var(--score-red);
+    border-radius: 8px;
+    padding: 1rem;
     position: relative;
+    box-shadow: var(--clean-shadow);
+    margin-bottom: 1rem;
 }
 
 .admin-container::before {
@@ -714,104 +716,111 @@ body::before {
     top: -12px;
     left: 25px;
     background: var(--dark-bg);
-    color: var(--red-alert);
-    font-family: 'Orbitron', monospace;
-    font-weight: 600;
+    color: var(--score-red);
+    font-family: 'Press Start 2P', monospace;
     padding: 0 8px;
-    font-size: 0.7rem;
+    font-size: 8px;
     letter-spacing: 1px;
+    text-shadow: var(--text-shadow);
 }
 
 .admin-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--red-alert);
+    border-bottom: var(--border-width) solid var(--score-red);
 }
 
 .admin-header h2 {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--red-alert);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: var(--score-red);
     text-transform: uppercase;
     letter-spacing: 2px;
+    text-shadow: var(--text-shadow);
 }
 
 .admin-stats {
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
     align-items: center;
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-    color: var(--white-glow);
+    font-family: 'Press Start 2P', monospace;
+    color: var(--text-color);
+    text-shadow: var(--text-shadow);
+    font-size: 10px;
 }
 
 .admin-controls {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .control-section h3 {
     margin-bottom: 1rem;
-    color: var(--neon-orange);
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
+    color: var(--primary-color);
+    font-family: 'Press Start 2P', monospace;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
+    font-size: 12px;
+    text-shadow: var(--text-shadow);
 }
 
 .control-buttons {
     display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
 }
 
 /* Admin Table - Data Matrix */
 .teams-table-container {
-    margin-top: 2rem;
+    margin-top: 1rem;
 }
 
 .table-wrapper {
     overflow-x: auto;
-    border: 1px solid var(--electric-blue);
-    background: rgba(0, 8, 17, 0.8);
+    border: var(--border-width) solid var(--secondary-color);
+    background: var(--darker-bg);
+    border-radius: 8px;
 }
 
 .teams-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 600px;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
 }
 
 .teams-table th {
-    background: linear-gradient(90deg, var(--electric-blue), var(--grid-blue));
-    color: var(--white-glow);
-    padding: 1rem;
+    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    color: var(--dk-black);
+    padding: 0.75rem 0.5rem;
     text-align: left;
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    border-bottom: 2px solid var(--neon-cyan);
+    letter-spacing: 1px;
+    border-bottom: var(--border-width) solid var(--secondary-color);
+    font-size: 8px;
 }
 
 .teams-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--grid-blue);
-    color: var(--neon-cyan);
-    background: rgba(0, 17, 34, 0.3);
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--secondary-color);
+    color: var(--secondary-color);
+    background: rgba(79, 195, 247, 0.1);
     transition: background 0.3s ease;
 }
 
 .teams-table tr:hover:not(.no-data) {
-    background: rgba(0, 255, 255, 0.1);
+    background: rgba(79, 195, 247, 0.2);
 }
 
 .teams-table tr:hover td {
-    background: rgba(0, 255, 255, 0.1);
+    background: rgba(79, 195, 247, 0.2);
 }
 
 .teams-table .no-data {
@@ -906,6 +915,12 @@ body::before {
 
 /* Desktop Styles */
 @media (min-width: 768px) {
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+    }
+
     .nav-container {
         padding: 0 2rem;
         flex-direction: row;
