@@ -81,6 +81,7 @@
 
         if (playerTeamId) {
             console.log('Found existing team ID:', playerTeamId);
+            console.log('Requesting team data for ID:', parseInt(playerTeamId));
             showPlayerControls();
             socket.emit('get_team_data', {team_id: parseInt(playerTeamId)});
         }
@@ -88,10 +89,32 @@
 
     // On page load, check if user already has a team and redirect/show controls immediately
     window.addEventListener('load', function() {
+        // Refresh playerTeamId from localStorage in case it was set in another tab
+        playerTeamId = localStorage.getItem('teamId');
+
         if (playerTeamId) {
+            console.log('Page load - found team ID:', playerTeamId);
             // Hide join form immediately
             document.getElementById('join-form').style.display = 'none';
             document.getElementById('player-controls').style.display = 'block';
+        }
+    });
+
+    // Listen for localStorage changes from other tabs
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'teamId') {
+            playerTeamId = e.newValue;
+            console.log('localStorage changed - team ID:', playerTeamId);
+
+            if (playerTeamId) {
+                showPlayerControls();
+                socket.emit('get_team_data', {team_id: parseInt(playerTeamId)});
+            } else {
+                // Team was deleted, show join form
+                document.getElementById('join-form').style.display = 'block';
+                document.getElementById('player-controls').style.display = 'none';
+                document.getElementById('success-message').style.display = 'none';
+            }
         }
     });
 
@@ -180,14 +203,18 @@
     document.getElementById('update-name-btn').addEventListener('click', function() {
         const newName = document.getElementById('current-team-name').value.trim();
         if (newName && playerTeamId) {
-            socket.emit('update_team_name', {team_id: playerTeamId, team_name: newName});
+            socket.emit('update_team_name', {team_id: parseInt(playerTeamId), team_name: newName});
+        } else {
+            alert('Missing team ID or team name');
         }
     });
 
     document.getElementById('update-score-btn').addEventListener('click', function() {
         const newScore = parseFloat(document.getElementById('current-score').value);
         if (!isNaN(newScore) && newScore >= 0 && playerTeamId) {
-            socket.emit('update_score', {team_id: playerTeamId, score: newScore});
+            socket.emit('update_score', {team_id: parseInt(playerTeamId), score: newScore});
+        } else {
+            alert('Missing team ID or invalid score');
         }
     });
 
@@ -197,7 +224,9 @@
         document.getElementById('current-score').value = newScore;
 
         if (playerTeamId) {
-            socket.emit('update_score', {team_id: playerTeamId, score: newScore});
+            socket.emit('update_score', {team_id: parseInt(playerTeamId), score: newScore});
+        } else {
+            alert('Missing team ID');
         }
     }
 
