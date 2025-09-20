@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Team - Birthday Scoreboard{% endblock %}
+
+{% block nav_buttons %}
+<div class="nav-buttons">
+    <a href="/" class="btn btn-secondary">📊 View Leaderboard</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-header">
+        <h2>⚙️ Edit Your Team</h2>
+        <div class="team-info">
+            <span class="team-name">{{ team.name }}</span>
+            <span class="team-score">Score: {{ team.score }}</span>
+            <span class="status-indicator" id="connection-status">🔴 Connecting...</span>
+        </div>
+    </div>
+
+    <div class="edit-controls">
+        <div class="control-group">
+            <label for="current-team-name">Team Name:</label>
+            <div class="input-group">
+                <input type="text" id="current-team-name" value="{{ team.name }}" maxlength="50">
+                <button id="update-name-btn" class="btn btn-secondary">Update Name</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="current-score">Score:</label>
+            <div class="input-group">
+                <input type="number" id="current-score" value="{{ team.score }}" min="0" step="0.5">
+                <button id="update-score-btn" class="btn btn-primary">Update Score</button>
+            </div>
+        </div>
+
+        <div class="quick-score-buttons">
+            <h4>Quick Score Changes:</h4>
+            <div class="button-grid">
+                <button class="btn btn-small" onclick="addToScore(0.5)">+0.5</button>
+                <button class="btn btn-small" onclick="addToScore(1)">+1</button>
+                <button class="btn btn-small" onclick="addToScore(5)">+5</button>
+                <button class="btn btn-small" onclick="addToScore(10)">+10</button>
+                <button class="btn btn-small btn-danger" onclick="addToScore(-0.5)">-0.5</button>
+                <button class="btn btn-small btn-danger" onclick="addToScore(-1)">-1</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mini-leaderboard-section">
+        <h3>🏆 Current Standings</h3>
+        <div class="mini-leaderboard" id="mini-leaderboard">
+            <div class="no-teams">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const socket = io();
+    const currentTeam = {{ team | tojson }};
+
+    socket.on('connect', function() {
+        document.getElementById('connection-status').innerHTML = '🟢 Live';
+        socket.emit('request_leaderboard');
+        socket.emit('get_team_data');
+    });
+
+    socket.on('disconnect', function() {
+        document.getElementById('connection-status').innerHTML = '🔴 Disconnected';
+    });
+
+    socket.on('team_data', function(data) {
+        // Update form with latest team data
+        document.getElementById('current-team-name').value = data.team_name;
+        document.getElementById('current-score').value = data.score;
+        // Update header info
+        document.querySelector('.team-name').textContent = data.team_name;
+        document.querySelector('.team-score').textContent = 'Score: ' + formatScore(data.score);
+    });
+
+    socket.on('leaderboard_update', function(data) {
+        updateMiniLeaderboard(data.teams);
+    });
+
+    socket.on('error', function(data) {
+        console.log('Error received:', data.message);
+
+        // If team not found, redirect to join
+        if (data.message === 'Team not found' || data.message === 'No team in session') {
+            alert('Your team was deleted by an admin. Redirecting to join page.');
+            window.location.href = '/join';
+            return;
+        }
+
+        alert('Error: ' + data.message);
+    });
+
+    // Update team name
+    document.getElementById('update-name-btn').addEventListener('click', function() {
+        const newName = document.getElementById('current-team-name').value.trim();
+        if (newName) {
+            socket.emit('update_team_name', {team_name: newName});
+        } else {
+            alert('Team name is required');
+        }
+    });
+
+    // Update score
+    document.getElementById('update-score-btn').addEventListener('click', function() {
+        const newScore = parseFloat(document.getElementById('current-score').value);
+        if (!isNaN(newScore) && newScore >= 0) {
+            socket.emit('update_score', {score: newScore});
+        } else {
+            alert('Invalid score - must be 0 or greater');
+        }
+    });
+
+    // Quick score changes
+    function addToScore(points) {
+        const currentScore = parseFloat(document.getElementById('current-score').value) || 0;
+        const newScore = Math.max(0, currentScore + points);
+        document.getElementById('current-score').value = newScore;
+        socket.emit('update_score', {score: newScore});
+    }
+
+    // Mini leaderboard
+    function updateMiniLeaderboard(teams) {
+        const miniLeaderboard = document.getElementById('mini-leaderboard');
+        miniLeaderboard.innerHTML = '';
+
+        if (teams.length === 0) {
+            const noTeams = document.createElement('div');
+            noTeams.className = 'no-teams';
+            noTeams.innerHTML = '<p>No teams yet!</p>';
+            miniLeaderboard.appendChild(noTeams);
+        } else {
+            teams.sort((a, b) => b.score - a.score);
+
+            teams.slice(0, 5).forEach((team, index) => {
+                const entry = document.createElement('div');
+                entry.className = 'mini-entry';
+                if (team.id === currentTeam.id) {
+                    entry.classList.add('highlight');
+                }
+                entry.innerHTML = `
+                    <span class="mini-rank">${getRankDisplay(index + 1)}</span>
+                    <span class="mini-name">${escapeHtml(team.name)}</span>
+                    <span class="mini-score">${formatScore(team.score)}</span>
+                `;
+                miniLeaderboard.appendChild(entry);
+            });
+        }
+    }
+
+    function getRankDisplay(rank) {
+        if (rank === 1) return '🥇';
+        if (rank === 2) return '🥈';
+        if (rank === 3) return '🥉';
+        return rank;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}

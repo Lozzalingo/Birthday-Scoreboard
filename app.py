@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, jsonify, url_for, send_file
+from flask import Flask, render_template, request, session, jsonify, url_for, send_file, redirect
 from flask_socketio import SocketIO, emit, disconnect
 import qrcode
 import io
@@ -11,8 +11,10 @@ import database as db
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 
-# Configure longer session lifetime (24 hours)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+# Configure persistent session cookies (7 days)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Initialize SocketIO with CORS enabled
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -51,13 +53,31 @@ def join():
         # Verify team still exists
         team = db.get_team_by_id(team_id)
         if team:
-            # User has an active team, render page with team data
-            return render_template('join.html', existing_team=team)
+            # User has an active team, redirect to edit page
+            return redirect(url_for('edit'))
         else:
             # Team was deleted, clear session
             session.pop('team_id', None)
 
     return render_template('join.html')
+
+@app.route('/edit')
+def edit():
+    """Edit team page for players."""
+    # Check if user has a team in session
+    team_id = session.get('team_id')
+    if not team_id:
+        # No team in session, redirect to join
+        return redirect(url_for('join'))
+
+    # Verify team still exists
+    team = db.get_team_by_id(team_id)
+    if not team:
+        # Team was deleted, clear session and redirect to join
+        session.pop('team_id', None)
+        return redirect(url_for('join'))
+
+    return render_template('edit.html', team=team)
 
 @app.route('/admin')
 def admin():
@@ -182,11 +202,12 @@ def handle_join_game(data):
         session.permanent = True
         session['team_id'] = team['id']
 
-        # Emit success to joining client
+        # Emit success with redirect instruction
         emit('team_joined', {
             'team_id': team['id'],
             'team_name': team['name'],
-            'score': team['score']
+            'score': team['score'],
+            'redirect': '/edit'
         })
 
         # Broadcast leaderboard update to all clients

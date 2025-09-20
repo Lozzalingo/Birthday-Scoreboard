@@ -138,8 +138,6 @@
     socket.on('team_joined', function(data) {
         playerTeamId = data.team_id;
         currentTeam = data;
-        document.getElementById('current-team-name').value = data.team_name;
-        document.getElementById('current-score').value = data.score;
 
         // Reset submit button
         const submitButton = document.querySelector('#join-form button[type="submit"]');
@@ -148,7 +146,13 @@
             submitButton.textContent = '🚀 Join Game';
         }
 
-        showSuccessAndControls();
+        // Redirect to edit page
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        } else {
+            // Fallback to showing controls
+            showSuccessAndControls();
+        }
     });
 
     socket.on('team_data', function(data) {

@@ -942,3 +942,115 @@ body {
     80% { transform: translate(2px, -2px); }
     100% { transform: translate(0); }
 }
+
+/* Edit Page Styles */
+.edit-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9), rgba(0, 8, 17, 0.9));
+    border: 2px solid var(--arcade-yellow);
+    border-radius: 0;
+}
+
+.edit-header h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: var(--arcade-yellow);
+    text-shadow: var(--text-shadow);
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.team-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--arcade-white);
+    text-shadow: var(--text-shadow);
+}
+
+.team-score {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: var(--arcade-cyan);
+    text-shadow: var(--text-shadow);
+}
+
+.edit-controls {
+    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9), rgba(0, 8, 17, 0.9));
+    border: var(--border-width) solid var(--arcade-white);
+    padding: 2rem;
+    border-radius: 0;
+}
+
+.quick-score-buttons h4 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--arcade-white);
+    text-shadow: var(--text-shadow);
+    margin-bottom: 1rem;
+}
+
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 0.75rem;
+    border: var(--border-width) solid var(--arcade-white);
+    background: var(--dark-bg);
+    color: var(--arcade-white);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    border-radius: 0;
+    text-shadow: var(--text-shadow);
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--arcade-yellow);
+}
+
+@media (max-width: 768px) {
+    .edit-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .edit-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .team-info {
+        align-items: center;
+    }
+
+    .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
