@@ -73,54 +73,60 @@
 {% block scripts %}
 <script>
     const socket = io();
-    // Use localStorage instead of sessionStorage to share across tabs
-    let playerTeamId = localStorage.getItem('teamId');
+    let playerTeamId = null;
+    let currentTeam = null;
+
+    // Fetch current team from server session
+    async function fetchMyTeam() {
+        try {
+            const response = await fetch('/api/my-team');
+            const data = await response.json();
+            if (data.success) {
+                playerTeamId = data.team.id;
+                currentTeam = data.team;
+                return data.team;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error fetching team:', error);
+            return null;
+        }
+    }
 
     socket.on('connect', function() {
         socket.emit('request_leaderboard');
 
-        if (playerTeamId) {
-            console.log('Found existing team ID:', playerTeamId);
-            console.log('Requesting team data for ID:', parseInt(playerTeamId));
-            showPlayerControls();
-            socket.emit('get_team_data', {team_id: parseInt(playerTeamId)});
-        }
-    });
-
-    // On page load, check if user already has a team and redirect/show controls immediately
-    window.addEventListener('load', function() {
-        // Refresh playerTeamId from localStorage in case it was set in another tab
-        playerTeamId = localStorage.getItem('teamId');
-
-        if (playerTeamId) {
-            console.log('Page load - found team ID:', playerTeamId);
-            // Hide join form immediately
-            document.getElementById('join-form').style.display = 'none';
-            document.getElementById('player-controls').style.display = 'block';
-        }
-    });
-
-    // Listen for localStorage changes from other tabs
-    window.addEventListener('storage', function(e) {
-        if (e.key === 'teamId') {
-            playerTeamId = e.newValue;
-            console.log('localStorage changed - team ID:', playerTeamId);
-
-            if (playerTeamId) {
+        // Check for existing team on connect
+        fetchMyTeam().then(team => {
+            if (team) {
+                console.log('Found existing team:', team);
                 showPlayerControls();
-                socket.emit('get_team_data', {team_id: parseInt(playerTeamId)});
-            } else {
-                // Team was deleted, show join form
-                document.getElementById('join-form').style.display = 'block';
-                document.getElementById('player-controls').style.display = 'none';
-                document.getElementById('success-message').style.display = 'none';
+                // Populate form with team data
+                document.getElementById('current-team-name').value = team.name;
+                document.getElementById('current-score').value = team.score;
+                socket.emit('get_team_data');
             }
-        }
+        });
+    });
+
+    // On page load, check if user already has a team
+    window.addEventListener('load', function() {
+        fetchMyTeam().then(team => {
+            if (team) {
+                console.log('Page load - found team:', team);
+                // Hide join form immediately and show controls
+                document.getElementById('join-form').style.display = 'none';
+                document.getElementById('player-controls').style.display = 'block';
+                // Populate form with team data
+                document.getElementById('current-team-name').value = team.name;
+                document.getElementById('current-score').value = team.score;
+            }
+        });
     });
 
     socket.on('team_joined', function(data) {
         playerTeamId = data.team_id;
-        localStorage.setItem('teamId', playerTeamId);
+        currentTeam = data;
         document.getElementById('current-team-name').value = data.team_name;
         document.getElementById('current-score').value = data.score;
 
@@ -149,10 +155,10 @@
     socket.on('error', function(data) {
         console.log('Error received:', data.message);
 
-        // If team not found, clear session and show join form
-        if (data.message === 'Team not found') {
-            localStorage.removeItem('teamId');
+        // If team not found, clear local data and show join form
+        if (data.message === 'Team not found' || data.message === 'No team in session') {
             playerTeamId = null;
+            currentTeam = null;
             document.getElementById('join-form').style.display = 'block';
             document.getElementById('player-controls').style.display = 'none';
             document.getElementById('success-message').style.display = 'none';
@@ -173,8 +179,8 @@
     document.getElementById('join-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // Check if user already has a team (from another tab)
-        if (localStorage.getItem('teamId')) {
+        // Check if user already has a team
+        if (playerTeamId || currentTeam) {
             alert('You already have a team! Use the "My Team" button to manage it.');
             window.location.href = '/';
             return;
@@ -202,19 +208,19 @@
 
     document.getElementById('update-name-btn').addEventListener('click', function() {
         const newName = document.getElementById('current-team-name').value.trim();
-        if (newName && playerTeamId) {
-            socket.emit('update_team_name', {team_id: parseInt(playerTeamId), team_name: newName});
+        if (newName) {
+            socket.emit('update_team_name', {team_name: newName});
         } else {
-            alert('Missing team ID or team name');
+            alert('Team name is required');
         }
     });
 
     document.getElementById('update-score-btn').addEventListener('click', function() {
         const newScore = parseFloat(document.getElementById('current-score').value);
-        if (!isNaN(newScore) && newScore >= 0 && playerTeamId) {
-            socket.emit('update_score', {team_id: parseInt(playerTeamId), score: newScore});
+        if (!isNaN(newScore) && newScore >= 0) {
+            socket.emit('update_score', {score: newScore});
         } else {
-            alert('Missing team ID or invalid score');
+            alert('Invalid score - must be 0 or greater');
         }
     });
 
@@ -223,11 +229,7 @@
         const newScore = Math.max(0, currentScore + points);
         document.getElementById('current-score').value = newScore;
 
-        if (playerTeamId) {
-            socket.emit('update_score', {team_id: parseInt(playerTeamId), score: newScore});
-        } else {
-            alert('Missing team ID');
-        }
+        socket.emit('update_score', {score: newScore});
     }
 
     function showSuccessAndControls() {

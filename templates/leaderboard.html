@@ -34,13 +34,25 @@
 {% block scripts %}
 <script>
     const socket = io();
-    let playerTeamId = localStorage.getItem('teamId');
+    let hasTeam = false;
 
     // Check if user already has a team
-    if (playerTeamId) {
-        document.getElementById('join-btn').style.display = 'none';
-        document.getElementById('team-controls-btn').style.display = 'inline-block';
+    async function checkForTeam() {
+        try {
+            const response = await fetch('/api/my-team');
+            const data = await response.json();
+            if (data.success) {
+                hasTeam = true;
+                document.getElementById('join-btn').style.display = 'none';
+                document.getElementById('team-controls-btn').style.display = 'inline-block';
+            }
+        } catch (error) {
+            console.error('Error checking for team:', error);
+        }
     }
+
+    // Check for team on page load
+    checkForTeam();
 
     socket.on('connect', function() {
         document.getElementById('connection-status').innerHTML = '🟢 Live';

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, jsonify, url_for, send_file
 from flask_socketio import SocketIO, emit, disconnect
+from flask_session import Session
 import qrcode
 import io
 import os
@@ -10,6 +11,19 @@ import database as db
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(16)
+
+# Configure persistent sessions
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'sessions')
+app.config['SESSION_FILE_THRESHOLD'] = 500
+
+# Create sessions directory if it doesn't exist
+os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+
+# Initialize Flask-Session
+Session(app)
 
 # Initialize SocketIO with CORS enabled
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -86,6 +100,27 @@ def api_teams():
     teams = db.get_all_teams()
     return jsonify({'teams': teams})
 
+@app.route('/api/my-team')
+def api_my_team():
+    """Get current user's team from session."""
+    team_id = session.get('team_id')
+    if team_id:
+        team = db.get_team_by_id(team_id)
+        if team:
+            return jsonify({
+                'success': True,
+                'team': {
+                    'id': team['id'],
+                    'name': team['name'],
+                    'score': team['score']
+                }
+            })
+        else:
+            # Team was deleted, clear session
+            session.pop('team_id', None)
+            return jsonify({'success': False, 'message': 'Team not found'})
+    return jsonify({'success': False, 'message': 'No team in session'})
+
 # WebSocket Events
 @socketio.on('connect')
 def handle_connect():
@@ -154,12 +189,12 @@ def handle_join_game(data):
         emit('error', {'message': 'Failed to join game. Please try again.'})
 
 @socketio.on('get_team_data')
-def handle_get_team_data(data):
-    """Get specific team data."""
-    team_id = data.get('team_id')
+def handle_get_team_data(data=None):
+    """Get current user's team data from session."""
+    team_id = session.get('team_id')
 
     if not team_id:
-        emit('error', {'message': 'Team ID is required'})
+        emit('error', {'message': 'No team in session'})
         return
 
     team = db.get_team_by_id(team_id)
@@ -171,16 +206,18 @@ def handle_get_team_data(data):
             'score': team['score']
         })
     else:
+        # Team was deleted, clear session
+        session.pop('team_id', None)
         emit('error', {'message': 'Team not found'})
 
 @socketio.on('update_team_name')
 def handle_update_team_name(data):
     """Handle team name update."""
-    team_id = data.get('team_id')
+    team_id = session.get('team_id')
     new_name = data.get('team_name', '').strip()
 
     if not team_id:
-        emit('error', {'message': 'Team ID is required'})
+        emit('error', {'message': 'No team in session'})
         return
 
     if not new_name:
@@ -221,11 +258,11 @@ def handle_update_team_name(data):
 @socketio.on('update_score')
 def handle_update_score(data):
     """Handle score update."""
-    team_id = data.get('team_id')
+    team_id = session.get('team_id')
     new_score = data.get('score')
 
     if not team_id:
-        emit('error', {'message': 'Team ID is required'})
+        emit('error', {'message': 'No team in session'})
         return
 
     if new_score is None or new_score < 0:

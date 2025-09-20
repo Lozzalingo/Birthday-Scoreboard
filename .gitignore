@@ -42,6 +42,8 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 
+sessions/
+
 node_modules/
 *.log
 

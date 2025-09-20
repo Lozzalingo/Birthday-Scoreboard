@@ -1,5 +1,5 @@
-/* TRON 1982 RETRO ARCADE SCOREBOARD */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+/* CLASSIC ARCADE SCOREBOARD - DONKEY KONG & PAC-MAN STYLE */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 /* Global Reset & Tron Setup */
 * {
@@ -9,74 +9,45 @@
 }
 
 :root {
-    /* Tron Color Palette */
-    --neon-cyan: #00FFFF;
-    --neon-orange: #FF6600;
-    --electric-blue: #0066FF;
-    --grid-blue: #003366;
-    --dark-bg: #000011;
-    --darker-bg: #000008;
-    --grid-line: #001122;
-    --white-glow: #FFFFFF;
-    --red-alert: #FF0033;
+    /* Classic Arcade Color Palette */
+    --arcade-yellow: #FFFF00;
+    --arcade-red: #FF0000;
+    --arcade-blue: #0000FF;
+    --arcade-green: #00FF00;
+    --arcade-white: #FFFFFF;
+    --arcade-orange: #FF8000;
+    --arcade-purple: #FF00FF;
+    --arcade-cyan: #00FFFF;
+    --dark-bg: #000000;
+    --darker-bg: #001122;
+    --border-color: #FFFFFF;
 
-    /* Subtle Glow Effects */
-    --cyan-glow: 0 0 3px var(--neon-cyan);
-    --orange-glow: 0 0 3px var(--neon-orange);
-    --blue-glow: 0 0 3px var(--electric-blue);
-    --white-glow-effect: 0 0 2px var(--white-glow);
-    --red-glow: 0 0 3px var(--red-alert);
+    /* No glow effects - classic arcade look */
+    --text-shadow: 2px 2px 0px #000000;
+    --border-width: 2px;
 }
 
 body {
-    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
     background: var(--dark-bg);
-    color: var(--neon-cyan);
+    color: var(--arcade-white);
     min-height: 100vh;
-    line-height: 1.4;
+    line-height: 1.8;
     overflow-x: hidden;
-
-    /* Animated Grid Background */
-    background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: grid-pulse 4s ease-in-out infinite alternate;
+    font-size: 12px;
+    text-shadow: var(--text-shadow);
 }
 
-@keyframes grid-pulse {
-    0% { background-position: 0 0, 0 0; }
-    100% { background-position: 25px 25px, 25px 25px; }
-}
+/* Remove animations for classic arcade feel */
 
-/* Laser Beam Scanning Effect */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-    box-shadow: var(--cyan-glow);
-    animation: laser-scan 6s linear infinite;
-    z-index: 1000;
-}
-
-@keyframes laser-scan {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
-/* Navigation - Command Terminal Style */
+/* Navigation - Classic Arcade Style */
 .navbar {
-    background: rgba(0, 17, 34, 0.95);
-    border-bottom: 1px solid var(--neon-cyan);
+    background: var(--dark-bg);
+    border-bottom: var(--border-width) solid var(--arcade-yellow);
     padding: 1rem 0;
     position: sticky;
     top: 0;
     z-index: 999;
-    backdrop-filter: blur(10px);
 }
 
 .nav-container {
@@ -89,20 +60,12 @@ body::before {
 }
 
 .nav-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--neon-cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: var(--arcade-yellow);
     text-transform: uppercase;
-    letter-spacing: 2px;
-    position: relative;
-}
-
-.nav-title::before {
-    content: '>';
-    color: var(--neon-orange);
-    margin-right: 10px;
-    animation: cursor-blink 1s infinite;
+    letter-spacing: 1px;
+    text-shadow: var(--text-shadow);
 }
 
 @keyframes cursor-blink {
@@ -123,71 +86,71 @@ body::before {
     position: relative;
 }
 
-/* Buttons - Arcade Style */
+/* Buttons - Classic Arcade Style */
 .btn {
     display: inline-block;
-    padding: 10px 20px;
-    border: 1px solid var(--neon-cyan);
-    background: rgba(0, 17, 34, 0.8);
-    color: var(--neon-cyan);
-    font-family: 'Orbitron', monospace;
-    font-weight: 600;
+    padding: 12px 20px;
+    border: var(--border-width) solid var(--arcade-white);
+    background: var(--dark-bg);
+    color: var(--arcade-white);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
     text-decoration: none;
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    text-shadow: var(--text-shadow);
+    border-radius: 0;
+    /* Remove transitions and clip-path for classic feel */
 }
 
 .btn:hover {
-    background: var(--neon-cyan);
+    background: var(--arcade-white);
     color: var(--dark-bg);
-    transform: translateY(-1px);
+    text-shadow: none;
 }
 
 .btn-primary {
-    border-color: var(--neon-orange);
-    color: var(--neon-orange);
+    border-color: var(--arcade-yellow);
+    color: var(--arcade-yellow);
 }
 
 .btn-primary:hover {
-    background: var(--neon-orange);
+    background: var(--arcade-yellow);
     color: var(--dark-bg);
 }
 
 .btn-secondary {
-    border-color: var(--electric-blue);
-    color: var(--electric-blue);
+    border-color: var(--arcade-cyan);
+    color: var(--arcade-cyan);
 }
 
 .btn-secondary:hover {
-    background: var(--electric-blue);
+    background: var(--arcade-cyan);
     color: var(--dark-bg);
 }
 
 .btn-danger {
-    border-color: var(--red-alert);
-    color: var(--red-alert);
+    border-color: var(--arcade-red);
+    color: var(--arcade-red);
 }
 
 .btn-danger:hover {
-    background: var(--red-alert);
+    background: var(--arcade-red);
     color: var(--dark-bg);
 }
 
 .btn-small {
     padding: 8px 16px;
-    font-size: 0.8rem;
+    font-size: 8px;
     letter-spacing: 1px;
 }
 
 .btn-large {
     padding: 16px 32px;
-    font-size: 1.1rem;
-    letter-spacing: 3px;
+    font-size: 12px;
+    letter-spacing: 2px;
 }
 
 /* Leaderboard - Main Display Terminal */
