@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Birthday Scoreboard{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='fav.png') }}">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{% block og_title %}Birthday Scoreboard - Real-time Leaderboard{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Real-time interactive leaderboard perfect for birthday parties, games, and competitions. Join via QR code, update scores live, and watch the action unfold!{% endblock %}">
+    <meta property="og:image" content="{{ url_for('static', filename='social_share.png', _external=True) }}">
+    <meta property="og:url" content="{{ request.url }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Birthday Scoreboard - Real-time Leaderboard{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Real-time interactive leaderboard perfect for birthday parties, games, and competitions. Join via QR code, update scores live, and watch the action unfold!{% endblock %}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='social_share.png', _external=True) }}">"
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 </head>
