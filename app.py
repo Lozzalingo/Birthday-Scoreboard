@@ -24,6 +24,35 @@ HOST = '0.0.0.0'
 PORT = 8080  # Using port 8080 to avoid conflicts
 DEBUG = True
 
+# Simple in-memory session store for team associations
+# Format: {session_id: team_id}
+session_teams = {}
+
+def get_session_id():
+    """Get or create a session ID for the current request."""
+    if 'session_id' not in session:
+        session['session_id'] = secrets.token_hex(16)
+        session.permanent = True
+    return session['session_id']
+
+def get_team_for_session():
+    """Get team ID for current session."""
+    session_id = get_session_id()
+    return session_teams.get(session_id)
+
+def set_team_for_session(team_id):
+    """Set team ID for current session."""
+    session_id = get_session_id()
+    session_teams[session_id] = team_id
+    print(f"STORED: session_id {session_id} -> team_id {team_id}")
+
+def clear_team_for_session():
+    """Clear team for current session."""
+    session_id = get_session_id()
+    if session_id in session_teams:
+        del session_teams[session_id]
+        print(f"CLEARED: session_id {session_id}")
+
 def get_join_url():
     """Get the join URL for QR code generation."""
     return f"http://{request.host}/join"
@@ -48,16 +77,21 @@ def scan():
 def join():
     """Join game page for players."""
     # Check if user already has a team in session
-    team_id = session.get('team_id')
+    team_id = get_team_for_session()
+    session_id = get_session_id()
+    print(f"JOIN ROUTE: session_id: {session_id}, team_id: {team_id}")
+
     if team_id:
         # Verify team still exists
         team = db.get_team_by_id(team_id)
         if team:
             # User has an active team, redirect to edit page
+            print(f"JOIN ROUTE: Redirecting to edit - user has team {team_id}")
             return redirect(url_for('edit'))
         else:
             # Team was deleted, clear session
-            session.pop('team_id', None)
+            print(f"JOIN ROUTE: Team {team_id} not found, clearing session")
+            clear_team_for_session()
 
     return render_template('join.html')
 
@@ -65,18 +99,24 @@ def join():
 def edit():
     """Edit team page for players."""
     # Check if user has a team in session
-    team_id = session.get('team_id')
+    team_id = get_team_for_session()
+    session_id = get_session_id()
+    print(f"EDIT ROUTE: session_id: {session_id}, team_id: {team_id}")
+
     if not team_id:
         # No team in session, redirect to join
+        print("EDIT ROUTE: No team_id in session, redirecting to join")
         return redirect(url_for('join'))
 
     # Verify team still exists
     team = db.get_team_by_id(team_id)
     if not team:
         # Team was deleted, clear session and redirect to join
-        session.pop('team_id', None)
+        print(f"EDIT ROUTE: Team {team_id} not found, clearing session")
+        clear_team_for_session()
         return redirect(url_for('join'))
 
+    print(f"EDIT ROUTE: Rendering edit page for team {team['name']} (id: {team_id})")
     return render_template('edit.html', team=team)
 
 @app.route('/admin')
@@ -124,7 +164,7 @@ def api_teams():
 @app.route('/api/my-team')
 def api_my_team():
     """Get current user's team from session."""
-    team_id = session.get('team_id')
+    team_id = get_team_for_session()
     if team_id:
         team = db.get_team_by_id(team_id)
         if team:
@@ -138,7 +178,7 @@ def api_my_team():
             })
         else:
             # Team was deleted, clear session
-            session.pop('team_id', None)
+            clear_team_for_session()
             return jsonify({'success': False, 'message': 'Team not found'})
     return jsonify({'success': False, 'message': 'No team in session'})
 
@@ -164,7 +204,7 @@ def handle_request_leaderboard():
 def handle_join_game(data):
     """Handle player joining the game."""
     # Check if user already has a team in session
-    existing_team_id = session.get('team_id')
+    existing_team_id = get_team_for_session()
     if existing_team_id:
         existing_team = db.get_team_by_id(existing_team_id)
         if existing_team:
@@ -172,7 +212,7 @@ def handle_join_game(data):
             return
         else:
             # Team was deleted, clear session
-            session.pop('team_id', None)
+            clear_team_for_session()
 
     team_name = data.get('team_name', '').strip()
 
@@ -198,9 +238,8 @@ def handle_join_game(data):
             emit('error', {'message': 'Failed to create team. Please try again.'})
             return
 
-        # Store team ID in session and make it permanent
-        session.permanent = True
-        session['team_id'] = team['id']
+        # Store team ID in session using our session store
+        set_team_for_session(team['id'])
 
         # Emit success with redirect instruction
         emit('team_joined', {
@@ -225,7 +264,7 @@ def handle_join_game(data):
 @socketio.on('get_team_data')
 def handle_get_team_data(data=None):
     """Get current user's team data from session."""
-    team_id = session.get('team_id')
+    team_id = get_team_for_session()
 
     if not team_id:
         emit('error', {'message': 'No team in session'})
@@ -241,13 +280,13 @@ def handle_get_team_data(data=None):
         })
     else:
         # Team was deleted, clear session
-        session.pop('team_id', None)
+        clear_team_for_session()
         emit('error', {'message': 'Team not found'})
 
 @socketio.on('update_team_name')
 def handle_update_team_name(data):
     """Handle team name update."""
-    team_id = session.get('team_id')
+    team_id = get_team_for_session()
     new_name = data.get('team_name', '').strip()
 
     if not team_id:
@@ -292,7 +331,7 @@ def handle_update_team_name(data):
 @socketio.on('update_score')
 def handle_update_score(data):
     """Handle score update."""
-    team_id = session.get('team_id')
+    team_id = get_team_for_session()
     new_score = data.get('score')
 
     if not team_id:
