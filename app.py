@@ -173,7 +173,8 @@ def api_my_team():
                 'team': {
                     'id': team['id'],
                     'name': team['name'],
-                    'score': team['score']
+                    'score': team['score'],
+                    'is_locked': bool(team.get('is_locked', False))
                 }
             })
         else:
@@ -332,11 +333,22 @@ def handle_update_team_name(data):
 def handle_update_score(data):
     """Handle score update."""
     team_id = get_team_for_session()
-    new_score = data.get('score')
 
     if not team_id:
         emit('error', {'message': 'No team in session'})
         return
+
+    # Check if players are globally locked from updating scores
+    if db.are_players_locked():
+        emit('error', {'message': 'Score updates are currently locked by the admin'})
+        return
+
+    # Check if this specific team is individually locked
+    if db.is_team_locked(team_id):
+        emit('error', {'message': 'Your team has been locked by the admin'})
+        return
+
+    new_score = data.get('score')
 
     if new_score is None or new_score < 0:
         emit('error', {'message': 'Valid score is required (must be 0 or greater)'})
@@ -449,6 +461,55 @@ def handle_clear_all_teams():
     except Exception as e:
         print(f"Error clearing teams: {e}")
         emit('error', {'message': 'Failed to clear teams. Please try again.'})
+
+@socketio.on('toggle_player_lock')
+def handle_toggle_player_lock(data):
+    """Handle toggling player lock state (admin only)."""
+    locked = data.get('locked', False)
+
+    try:
+        success = db.set_players_locked(locked)
+
+        if success:
+            # Broadcast lock state update to all clients
+            socketio.emit('player_lock_changed', {'locked': locked})
+
+            action = "locked" if locked else "unlocked"
+            print(f"Admin {action} player score updates")
+        else:
+            emit('error', {'message': 'Failed to update lock state'})
+
+    except Exception as e:
+        print(f"Error toggling player lock: {e}")
+        emit('error', {'message': 'Failed to update lock state. Please try again.'})
+
+@socketio.on('toggle_team_lock')
+def handle_toggle_team_lock(data):
+    """Handle toggling individual team lock state (admin only)."""
+    team_id = data.get('team_id')
+    locked = data.get('locked', False)
+
+    if not team_id:
+        emit('error', {'message': 'Team ID is required'})
+        return
+
+    try:
+        success = db.set_team_locked(team_id, locked)
+
+        if success:
+            # Broadcast individual team lock state to all clients
+            socketio.emit('team_lock_changed', {'team_id': team_id, 'locked': locked})
+
+            action = "locked" if locked else "unlocked"
+            team = db.get_team_by_id(team_id)
+            team_name = team['name'] if team else team_id
+            print(f"Admin {action} team: {team_name}")
+        else:
+            emit('error', {'message': 'Team not found'})
+
+    except Exception as e:
+        print(f"Error toggling team lock: {e}")
+        emit('error', {'message': 'Failed to update team lock state. Please try again.'})
 
 # Error handlers
 @app.errorhandler(404)

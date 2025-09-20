@@ -309,5 +309,9 @@
         div.textContent = text;
         return div.innerHTML;
     }
+
+    function formatScore(score) {
+        return parseFloat(score).toFixed(1);
+    }
 </script>
 {% endblock %}

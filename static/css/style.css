@@ -9,60 +9,86 @@
 }
 
 :root {
-    /* Classic Arcade Color Palette */
-    --arcade-yellow: #FFFF00;
-    --arcade-red: #FF0000;
-    --arcade-blue: #0000FF;
-    --arcade-green: #00FF00;
-    --arcade-white: #FFFFFF;
-    --arcade-orange: #FF8000;
-    --arcade-purple: #FF00FF;
-    --arcade-cyan: #00FFFF;
-    --dark-bg: #000000;
-    --darker-bg: #001122;
-    --border-color: #FFFFFF;
+    /* Donkey Kong Inspired Color Palette - Bright & Clean */
+    --dk-bright-blue: #4FC3F7;
+    --dk-red: #ff3b68;
+    --score-green: #32CD32;
+    --score-red: #FF4757;
+    --dk-white: #FFFFFF;
+    --dk-black: #000000;
+    --dark-bg: #1a1a1a;
+    --darker-bg: #0d0d0d;
 
-    /* No glow effects - classic arcade look */
-    --text-shadow: 2px 2px 0px #000000;
-    --border-width: 2px;
+    /* Unified color references */
+    --primary-color: var(--dk-red);
+    --secondary-color: var(--dk-bright-blue);
+    --accent-color: var(--dk-red);
+    --text-color: var(--dk-white);
+    --border-color: var(--dk-bright-blue);
+
+    /* Simplified visual effects */
+    --text-shadow: 2px 2px 0px var(--dk-black);
+    --border-width: 3px;
+    --clean-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    --button-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 body {
     font-family: 'Press Start 2P', 'Courier New', monospace;
-    background: var(--dark-bg);
-    color: var(--arcade-white);
+    background: linear-gradient(135deg, var(--dark-bg) 0%, var(--darker-bg) 100%);
+    color: var(--dk-white);
     min-height: 100vh;
     line-height: 1.8;
     overflow-x: hidden;
     font-size: 12px;
     text-shadow: var(--text-shadow);
+    position: relative;
 }
+
+/* Simplified background pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(255, 59, 104, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(79, 195, 247, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+}
+
 
 /* Remove animations for classic arcade feel */
 
 /* Navigation - Classic Arcade Style */
 .navbar {
     background: var(--dark-bg);
-    border-bottom: var(--border-width) solid var(--arcade-yellow);
+    border-bottom: var(--border-width) solid var(--border-color);
     padding: 1rem 0;
     position: sticky;
     top: 0;
     z-index: 999;
+    box-shadow: var(--clean-shadow);
 }
 
 .nav-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1rem;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 1rem;
     align-items: center;
+    text-align: center;
 }
 
 .nav-title {
     font-family: 'Press Start 2P', monospace;
-    font-size: 16px;
-    color: var(--arcade-yellow);
+    font-size: 18px;
+    color: var(--primary-color);
     text-transform: uppercase;
     letter-spacing: 1px;
     text-shadow: var(--text-shadow);
@@ -75,14 +101,17 @@ body {
 
 .nav-buttons {
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 300px;
 }
 
-/* Main Content Grid */
+/* Main Content Grid - Mobile First */
 .main-content {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1rem;
     position: relative;
 }
 
@@ -90,9 +119,9 @@ body {
 .btn {
     display: inline-block;
     padding: 12px 20px;
-    border: var(--border-width) solid var(--arcade-white);
-    background: var(--dark-bg);
-    color: var(--arcade-white);
+    border: var(--border-width) solid var(--text-color);
+    background: linear-gradient(45deg, var(--dark-bg), var(--darker-bg));
+    color: var(--text-color);
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
     text-decoration: none;
@@ -101,44 +130,77 @@ body {
     letter-spacing: 1px;
     cursor: pointer;
     text-shadow: var(--text-shadow);
-    border-radius: 0;
-    /* Remove transitions and clip-path for classic feel */
+    border-radius: 6px;
+    box-shadow: var(--button-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
 }
 
 .btn:hover {
-    background: var(--arcade-white);
+    background: var(--text-color);
     color: var(--dark-bg);
-    text-shadow: none;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: var(--button-shadow), var(--pulse-glow);
+    animation: button-pulse 0.3s ease;
+}
+
+@keyframes button-pulse {
+    0% { transform: translateY(-3px) scale(1.05); }
+    50% { transform: translateY(-3px) scale(1.08); }
+    100% { transform: translateY(-3px) scale(1.05); }
 }
 
 .btn-primary {
-    border-color: var(--arcade-yellow);
-    color: var(--arcade-yellow);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: linear-gradient(45deg, var(--dark-bg), rgba(220, 20, 60, 0.1));
 }
 
 .btn-primary:hover {
-    background: var(--arcade-yellow);
+    background: var(--primary-color);
     color: var(--dark-bg);
+    box-shadow: 0 0 25px var(--primary-color);
 }
 
 .btn-secondary {
-    border-color: var(--arcade-cyan);
-    color: var(--arcade-cyan);
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+    background: linear-gradient(45deg, var(--dark-bg), rgba(0, 191, 255, 0.1));
 }
 
 .btn-secondary:hover {
-    background: var(--arcade-cyan);
+    background: var(--secondary-color);
     color: var(--dark-bg);
+    box-shadow: var(--button-shadow);
 }
 
 .btn-danger {
-    border-color: var(--arcade-red);
-    color: var(--arcade-red);
+    border-color: var(--score-red);
+    color: var(--score-red);
+    background: linear-gradient(45deg, var(--dark-bg), rgba(255, 71, 87, 0.1));
 }
 
 .btn-danger:hover {
-    background: var(--arcade-red);
+    background: var(--score-red);
     color: var(--dark-bg);
+    box-shadow: 0 0 25px var(--score-red);
 }
 
 .btn-small {
@@ -155,13 +217,14 @@ body {
 
 /* Leaderboard - Main Display Terminal */
 .leaderboard-container {
-    background: rgba(0, 8, 17, 0.95);
-    border: 1px solid var(--neon-cyan);
-    clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
-    padding: 2rem;
-    margin: 2rem 0;
+    background: linear-gradient(135deg, var(--dark-bg), var(--darker-bg));
+    border: var(--border-width) solid var(--border-color);
+    padding: 1rem;
+    margin: 1rem 0;
     position: relative;
     overflow: hidden;
+    box-shadow: var(--clean-shadow);
+    border-radius: 8px;
 }
 
 .leaderboard-container::before {
@@ -170,46 +233,49 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-    animation: data-stream 2s linear infinite;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
 }
 
-@keyframes data-stream {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
 
 .leaderboard-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--grid-blue);
+    border-bottom: var(--border-width) solid var(--accent-color);
     position: relative;
 }
 
 .leaderboard-header h2 {
-    font-family: 'Orbitron', monospace;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--neon-orange);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 20px;
+    color: var(--primary-color);
     text-transform: uppercase;
     letter-spacing: 2px;
+    text-shadow: var(--text-shadow);
 }
 
 .status-indicator {
-    font-family: 'Orbitron', monospace;
-    font-weight: 600;
-    padding: 6px 12px;
-    border: 1px solid var(--electric-blue);
-    background: rgba(0, 102, 255, 0.1);
-    color: var(--electric-blue);
+    font-family: 'Press Start 2P', monospace;
+    padding: 8px 12px;
+    border: var(--border-width) solid var(--secondary-color);
+    background: linear-gradient(45deg, var(--dark-bg), rgba(79, 195, 247, 0.1));
+    color: var(--secondary-color);
     text-transform: uppercase;
     letter-spacing: 1px;
-    clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
-    font-size: 0.8rem;
+    font-size: 8px;
+    text-shadow: var(--text-shadow);
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+.status-indicator.locked {
+    border-color: var(--score-red);
+    background: linear-gradient(45deg, var(--dark-bg), rgba(255, 71, 87, 0.1));
+    color: var(--score-red);
 }
 
 /* Leaderboard Entries - Data Grid Style */
@@ -221,30 +287,34 @@ body {
 
 .leaderboard-entry {
     display: grid;
-    grid-template-columns: 100px 1fr 120px;
+    grid-template-columns: 80px 1fr 100px;
     align-items: center;
-    padding: 1rem;
-    border: 1px solid var(--grid-blue);
-    background: linear-gradient(90deg, rgba(0, 51, 102, 0.3), rgba(0, 17, 34, 0.5));
+    padding: 0.75rem;
+    border: 2px solid var(--accent-color);
+    background: linear-gradient(90deg, rgba(255, 59, 104, 0.1), rgba(79, 195, 247, 0.1));
     transition: all 0.3s ease;
     position: relative;
-    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    box-shadow: var(--button-shadow);
 }
 
 .leaderboard-entry.header {
-    background: rgba(0, 51, 102, 0.8);
-    color: var(--white-glow);
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
+    background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+    color: var(--dk-black);
+    font-family: 'Press Start 2P', monospace;
     text-transform: uppercase;
     letter-spacing: 1px;
-    border-color: var(--electric-blue);
+    border-color: var(--border-color);
+    text-shadow: none;
+    font-weight: bold;
 }
 
 .leaderboard-entry:not(.header):hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-color: var(--neon-cyan);
-    transform: translateX(3px);
+    background: linear-gradient(90deg, rgba(255, 59, 104, 0.2), rgba(79, 195, 247, 0.2));
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--clean-shadow);
 }
 
 .leaderboard-entry:not(.header)::before {
@@ -254,7 +324,7 @@ body {
     top: 0;
     bottom: 0;
     width: 2px;
-    background: var(--neon-orange);
+    background: var(--primary-color);
     opacity: 0;
     transition: opacity 0.2s ease;
 }
@@ -264,73 +334,76 @@ body {
 }
 
 .rank {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
     text-align: center;
-    color: var(--neon-orange);
+    color: var(--dk-white);
+    text-shadow: var(--text-shadow);
+    background: var(--primary-color);
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin: 0.25rem;
 }
 
 .team-name {
-    font-size: 1.2rem;
-    font-weight: 400;
-    color: var(--neon-cyan);
+    font-size: 14px;
+    color: var(--text-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-shadow: var(--text-shadow);
+    font-family: 'Press Start 2P', monospace;
 }
 
 .score {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
     text-align: center;
-    color: var(--white-glow);
+    color: var(--secondary-color);
+    text-shadow: var(--text-shadow);
+    font-weight: bold;
 }
 
 .no-teams {
     text-align: center;
     padding: 3rem;
-    color: var(--electric-blue);
-    font-family: 'Orbitron', monospace;
-    font-size: 1.2rem;
+    color: var(--secondary-color);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 2px;
-    animation: data-waiting 2s ease-in-out infinite alternate;
+    text-shadow: var(--text-shadow);
 }
 
-@keyframes data-waiting {
-    0% { opacity: 0.6; }
-    100% { opacity: 1; }
-}
 
-/* Scan Page - Dual Terminal Layout */
+/* Scan Page - Mobile First Layout */
 .scan-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
     align-items: start;
 }
 
 .leaderboard-section, .qr-section {
-    background: rgba(0, 8, 17, 0.95);
-    border: 1px solid var(--electric-blue);
-    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
-    padding: 2rem;
+    background: var(--dark-bg);
+    border: var(--border-width) solid var(--secondary-color);
+    border-radius: 8px;
+    padding: 1rem;
     position: relative;
+    box-shadow: var(--clean-shadow);
 }
 
 .qr-section {
-    border-color: var(--neon-orange);
+    border-color: var(--primary-color);
 }
 
 .mini-leaderboard {
     max-height: 400px;
     overflow-y: auto;
-    border: 1px solid var(--grid-blue);
-    background: rgba(0, 0, 17, 0.5);
+    border: 1px solid var(--secondary-color);
+    background: var(--darker-bg);
     padding: 1rem;
 }
 
@@ -341,12 +414,11 @@ body {
 
 .mini-leaderboard::-webkit-scrollbar-track {
     background: var(--darker-bg);
-    border: 1px solid var(--grid-blue);
+    border: 1px solid var(--secondary-color);
 }
 
 .mini-leaderboard::-webkit-scrollbar-thumb {
-    background: var(--neon-cyan);
-    box-shadow: var(--cyan-glow);
+    background: var(--secondary-color);
 }
 
 .mini-entry {
@@ -355,44 +427,51 @@ body {
     align-items: center;
     padding: 0.75rem;
     margin-bottom: 1px;
-    background: rgba(0, 51, 102, 0.2);
+    background: rgba(0, 191, 255, 0.1);
     border-left: 2px solid transparent;
     transition: all 0.3s ease;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
 }
 
 .mini-entry:hover {
-    background: rgba(0, 255, 255, 0.1);
-    border-left-color: var(--neon-cyan);
+    background: rgba(0, 191, 255, 0.2);
+    border-left-color: var(--secondary-color);
     transform: translateX(3px);
 }
 
 .mini-entry.highlight {
-    background: linear-gradient(90deg, rgba(255, 102, 0, 0.3), rgba(0, 51, 102, 0.3));
-    border-left-color: var(--neon-orange);
-    box-shadow: inset 0 0 20px rgba(255, 102, 0, 0.2);
+    background: linear-gradient(90deg, rgba(220, 20, 60, 0.2), rgba(0, 191, 255, 0.2));
+    border-left-color: var(--primary-color);
+    box-shadow: inset 0 0 20px rgba(220, 20, 60, 0.1);
 }
 
 .mini-rank {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
     text-align: center;
-    color: var(--neon-orange);
+    color: var(--dk-white);
+    text-shadow: var(--text-shadow);
+    background: var(--primary-color);
+    padding: 0.25rem;
+    border-radius: 4px;
+    margin: 0.125rem;
+    font-size: 6px;
 }
 
 .mini-name {
-    color: var(--neon-cyan);
+    color: var(--secondary-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     text-transform: uppercase;
+    text-shadow: var(--text-shadow);
 }
 
 .mini-score {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
     text-align: center;
-    color: var(--white-glow);
+    color: var(--text-color);
+    text-shadow: var(--text-shadow);
 }
 
 /* QR Code Container - Clean Style */
@@ -403,11 +482,12 @@ body {
 .qr-code {
     display: inline-block;
     padding: 1.5rem;
-    background: rgba(0, 255, 255, 0.05);
-    border: 1px solid var(--neon-cyan);
-    clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
+    background: rgba(0, 191, 255, 0.08);
+    border: var(--border-width) solid var(--secondary-color);
+    border-radius: 8px;
     margin: 2rem 0;
     position: relative;
+    box-shadow: var(--clean-shadow);
 }
 
 .qr-code img {
@@ -417,47 +497,50 @@ body {
 }
 
 .qr-instructions {
-    font-family: 'Orbitron', monospace;
-    font-size: 1rem;
-    color: var(--electric-blue);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--secondary-color);
     margin: 1rem 0;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-shadow: var(--text-shadow);
 }
 
 .manual-link {
     margin-top: 2rem;
     padding: 1rem;
-    background: rgba(0, 102, 255, 0.1);
-    border: 1px solid var(--electric-blue);
-    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    background: rgba(0, 191, 255, 0.1);
+    border: var(--border-width) solid var(--secondary-color);
+    border-radius: 8px;
+    box-shadow: var(--clean-shadow);
 }
 
 .manual-link a {
-    color: var(--neon-cyan);
+    color: var(--secondary-color);
     text-decoration: none;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
     transition: color 0.2s ease;
 }
 
 .manual-link a:hover {
-    color: var(--neon-orange);
+    color: var(--primary-color);
 }
 
-/* Join Page - Command Interface */
+/* Join Page - Mobile First Interface */
 .join-container {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
     align-items: start;
 }
 
 .join-form-section, .mini-leaderboard-section {
-    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9), rgba(0, 8, 17, 0.9));
-    border: 2px solid var(--neon-cyan);
-    clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
-    padding: 2rem;
-    box-shadow: var(--cyan-glow);
+    background: var(--dark-bg);
+    border: var(--border-width) solid var(--secondary-color);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: var(--clean-shadow);
 }
 
 .form-container {
@@ -477,64 +560,65 @@ body {
 }
 
 .form-group label {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-    color: var(--neon-orange);
+    font-family: 'Press Start 2P', monospace;
+    color: var(--primary-color);
     text-transform: uppercase;
     letter-spacing: 2px;
-    text-shadow: var(--orange-glow);
+    text-shadow: var(--text-shadow);
+    font-size: 10px;
+    margin-bottom: 0.5rem;
 }
 
 .form-group input {
     padding: 1rem;
-    border: 2px solid var(--grid-blue);
-    background: rgba(0, 17, 34, 0.8);
-    color: var(--neon-cyan);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 1rem;
-    clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+    border: var(--border-width) solid var(--secondary-color);
+    background: var(--dark-bg);
+    color: var(--text-color);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    border-radius: 4px;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-shadow: var(--text-shadow);
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: var(--neon-cyan);
-    box-shadow: var(--cyan-glow);
-    background: rgba(0, 51, 102, 0.3);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px var(--primary-color);
+    background: rgba(220, 20, 60, 0.1);
+    transform: scale(1.02);
 }
 
 .form-group input::placeholder {
-    color: var(--grid-blue);
+    color: var(--secondary-color);
     text-transform: none;
+    opacity: 0.7;
 }
 
 .success-message {
     text-align: center;
     padding: 2rem;
-    background: linear-gradient(45deg, rgba(255, 102, 0, 0.2), rgba(0, 255, 255, 0.1));
-    border: 2px solid var(--neon-orange);
-    color: var(--white-glow);
-    font-family: 'Orbitron', monospace;
-    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-    box-shadow: var(--orange-glow);
+    background: linear-gradient(45deg, rgba(220, 20, 60, 0.2), rgba(0, 191, 255, 0.1));
+    border: var(--border-width) solid var(--primary-color);
+    color: var(--text-color);
+    font-family: 'Press Start 2P', monospace;
+    border-radius: 8px;
+    box-shadow: var(--clean-shadow);
     margin: 2rem 0;
-    animation: success-pulse 2s ease-in-out infinite alternate;
+    font-size: 10px;
+    text-shadow: var(--text-shadow);
 }
 
-@keyframes success-pulse {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.02); }
-}
 
 .player-controls {
     margin-top: 2rem;
     padding: 2rem;
-    background: rgba(0, 102, 255, 0.1);
-    border: 2px solid var(--electric-blue);
-    clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
-    box-shadow: var(--blue-glow);
+    background: rgba(0, 191, 255, 0.1);
+    border: var(--border-width) solid var(--secondary-color);
+    border-radius: 8px;
+    box-shadow: var(--clean-shadow);
 }
 
 .control-group {
@@ -543,12 +627,13 @@ body {
 
 .control-group label {
     display: block;
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
     margin-bottom: 0.5rem;
-    color: var(--electric-blue);
+    color: var(--accent-color);
     text-transform: uppercase;
     letter-spacing: 1px;
+    font-size: 10px;
+    text-shadow: var(--text-shadow);
 }
 
 .input-group {
@@ -559,11 +644,13 @@ body {
 .input-group input {
     flex: 1;
     padding: 0.75rem;
-    border: 2px solid var(--grid-blue);
-    background: rgba(0, 8, 17, 0.8);
-    color: var(--neon-cyan);
-    font-family: 'Share Tech Mono', monospace;
-    clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+    border: var(--border-width) solid var(--secondary-color);
+    background: var(--dark-bg);
+    color: var(--text-color);
+    font-family: 'Press Start 2P', monospace;
+    border-radius: 4px;
+    font-size: 10px;
+    text-shadow: var(--text-shadow);
 }
 
 .quick-score-buttons {
@@ -572,6 +659,44 @@ body {
     margin-top: 1rem;
     flex-wrap: wrap;
     justify-content: center;
+}
+
+/* Positive score buttons (green) */
+.quick-score-buttons .btn[onclick*="+0.5"],
+.quick-score-buttons .btn[onclick*="+1"],
+.quick-score-buttons .btn[onclick*="+5"],
+.quick-score-buttons .btn[onclick*="+10"],
+.quick-score-buttons .btn:not(.btn-danger):not([onclick*="-"]) {
+    border-color: var(--score-green) !important;
+    color: var(--score-green) !important;
+    background: linear-gradient(45deg, var(--dark-bg), rgba(50, 205, 50, 0.1)) !important;
+}
+
+.quick-score-buttons .btn[onclick*="+0.5"]:hover,
+.quick-score-buttons .btn[onclick*="+1"]:hover,
+.quick-score-buttons .btn[onclick*="+5"]:hover,
+.quick-score-buttons .btn[onclick*="+10"]:hover,
+.quick-score-buttons .btn:not(.btn-danger):not([onclick*="-"]):hover {
+    background: var(--score-green) !important;
+    color: var(--dark-bg) !important;
+    box-shadow: 0 0 25px var(--score-green) !important;
+}
+
+/* Negative score buttons (red) */
+.quick-score-buttons .btn[onclick*="-0.5"],
+.quick-score-buttons .btn[onclick*="-1"],
+.quick-score-buttons .btn.btn-danger {
+    border-color: var(--score-red) !important;
+    color: var(--score-red) !important;
+    background: linear-gradient(45deg, var(--dark-bg), rgba(255, 71, 87, 0.1)) !important;
+}
+
+.quick-score-buttons .btn[onclick*="-0.5"]:hover,
+.quick-score-buttons .btn[onclick*="-1"]:hover,
+.quick-score-buttons .btn.btn-danger:hover {
+    background: var(--score-red) !important;
+    color: var(--dark-bg) !important;
+    box-shadow: 0 0 25px var(--score-red) !important;
 }
 
 /* Admin Page - Control Terminal */
@@ -779,102 +904,123 @@ body {
     margin-top: 1.5rem;
 }
 
-/* Responsive Design - Maintain Tron Aesthetic */
-@media (max-width: 768px) {
+/* Desktop Styles */
+@media (min-width: 768px) {
     .nav-container {
-        padding: 0 1rem;
-        flex-direction: column;
-        gap: 1rem;
+        padding: 0 2rem;
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
     }
 
     .nav-title {
-        font-size: 1.4rem;
+        font-size: 24px;
         letter-spacing: 2px;
+    }
+
+    .nav-buttons {
+        flex-direction: row;
+        gap: 1rem;
+        width: auto;
+        max-width: none;
     }
 
     .main-content {
-        padding: 1rem;
+        padding: 2rem;
     }
 
-    .scan-container,
-    .join-container {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+    .leaderboard-container {
+        padding: 2rem;
+        margin: 2rem 0;
     }
 
-    .leaderboard-entry {
-        grid-template-columns: 70px 1fr 90px;
-        padding: 0.75rem;
+    .leaderboard-header {
+        flex-direction: row;
+        justify-content: space-between;
+        text-align: left;
+        margin-bottom: 2rem;
     }
 
     .leaderboard-header h2 {
-        font-size: 1.8rem;
-        letter-spacing: 2px;
+        font-size: 28px;
+        letter-spacing: 3px;
     }
 
-    .mini-entry {
-        grid-template-columns: 40px 1fr 60px;
-        padding: 0.5rem;
+    .leaderboard-entry {
+        grid-template-columns: 100px 1fr 120px;
+        padding: 1rem;
     }
 
-    .control-buttons,
-    .nav-buttons {
-        flex-direction: column;
-        width: 100%;
+    .scan-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
     }
 
-    .quick-score-buttons {
-        justify-content: center;
+    .join-container {
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
     }
 
-    .modal-content {
-        width: 95%;
-        margin: 10% auto;
+    .leaderboard-section, .qr-section,
+    .join-form-section, .mini-leaderboard-section {
+        padding: 2rem;
     }
 
-    .modal-buttons {
-        flex-direction: column;
-    }
-
-    .actions {
-        flex-direction: column;
-    }
-
-    .teams-table {
-        font-size: 0.9rem;
+    .control-buttons {
+        flex-direction: row;
+        width: auto;
     }
 
     .teams-table th,
     .teams-table td {
-        padding: 0.75rem 0.5rem;
+        padding: 1rem;
     }
 }
 
 @media (max-width: 480px) {
-    .leaderboard-container,
-    .join-form-section,
-    .mini-leaderboard-section,
-    .admin-container {
-        padding: 1rem;
-        clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
-    }
-
-    .leaderboard-header,
-    .admin-header {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-
     .nav-title {
-        font-size: 1.2rem;
+        font-size: 16px;
         letter-spacing: 1px;
+    }
+
+    .leaderboard-header h2 {
+        font-size: 16px;
+        letter-spacing: 1px;
+    }
+
+    .leaderboard-entry {
+        grid-template-columns: 70px 1fr 90px;
+        padding: 0.5rem;
+    }
+
+    .rank {
+        font-size: 12px;
+        padding: 0.25rem;
+        margin: 0.125rem;
+    }
+
+    .team-name {
+        font-size: 10px;
+    }
+
+    .score {
+        font-size: 12px;
     }
 
     .btn {
-        padding: 10px 20px;
-        font-size: 0.9rem;
+        padding: 8px 16px;
+        font-size: 8px;
         letter-spacing: 1px;
+    }
+
+    .mini-entry {
+        grid-template-columns: 40px 1fr 60px;
+        padding: 0.25rem;
+    }
+
+    .mini-rank {
+        font-size: 5px;
+        padding: 0.125rem;
     }
 }
 
@@ -957,16 +1103,18 @@ body {
     align-items: center;
     margin-bottom: 2rem;
     padding: 2rem;
-    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9), rgba(0, 8, 17, 0.9));
-    border: 2px solid var(--arcade-yellow);
-    border-radius: 0;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    border: var(--border-width) solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--fancy-shadow);
 }
 
 .edit-header h2 {
     font-family: 'Press Start 2P', monospace;
     font-size: 18px;
-    color: var(--arcade-yellow);
-    text-shadow: var(--text-shadow);
+    color: var(--dk-black);
+    text-shadow: 2px 2px 0px var(--dk-white);
+    font-weight: bold;
 }
 
 .team-info {
@@ -976,31 +1124,32 @@ body {
     gap: 0.5rem;
 }
 
-.team-name {
+.team-info .team-name {
     font-family: 'Press Start 2P', monospace;
     font-size: 14px;
-    color: var(--arcade-white);
-    text-shadow: var(--text-shadow);
+    color: var(--dk-black);
+    text-shadow: 2px 2px 0px var(--dk-white);
 }
 
 .team-score {
     font-family: 'Press Start 2P', monospace;
     font-size: 12px;
-    color: var(--arcade-cyan);
-    text-shadow: var(--text-shadow);
+    color: var(--dk-black);
+    text-shadow: 2px 2px 0px var(--dk-white);
 }
 
 .edit-controls {
-    background: linear-gradient(135deg, rgba(0, 17, 34, 0.9), rgba(0, 8, 17, 0.9));
-    border: var(--border-width) solid var(--arcade-white);
+    background: linear-gradient(135deg, var(--dark-bg), var(--darker-bg));
+    border: var(--border-width) solid var(--secondary-color);
     padding: 2rem;
-    border-radius: 0;
+    border-radius: 8px;
+    box-shadow: var(--fancy-shadow);
 }
 
 .quick-score-buttons h4 {
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
-    color: var(--arcade-white);
+    color: var(--text-color);
     text-shadow: var(--text-shadow);
     margin-bottom: 1rem;
 }
@@ -1017,21 +1166,23 @@ body {
     align-items: center;
 }
 
-.input-group input {
+.edit-controls .input-group input {
     flex: 1;
     padding: 0.75rem;
-    border: var(--border-width) solid var(--arcade-white);
+    border: var(--border-width) solid var(--text-color);
     background: var(--dark-bg);
-    color: var(--arcade-white);
+    color: var(--text-color);
     font-family: 'Press Start 2P', monospace;
     font-size: 10px;
-    border-radius: 0;
+    border-radius: 4px;
     text-shadow: var(--text-shadow);
 }
 
-.input-group input:focus {
+.edit-controls .input-group input:focus {
     outline: none;
-    border-color: var(--arcade-yellow);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px var(--primary-color);
+    transform: scale(1.02);
 }
 
 @media (max-width: 768px) {

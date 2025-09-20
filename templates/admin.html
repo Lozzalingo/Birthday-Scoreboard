@@ -25,6 +25,7 @@
             <div class="control-buttons">
                 <button id="refresh-btn" class="btn btn-primary">🔄 Refresh Data</button>
                 <button id="export-btn" class="btn btn-secondary">📊 Export Data</button>
+                <button id="lock-toggle-btn" class="btn btn-secondary">🔓 Unlock Players</button>
             </div>
         </div>
     </div>
@@ -83,10 +84,16 @@
 <script>
     const socket = io();
     let teams = [];
+    let playersLocked = false;
 
     socket.on('connect', function() {
         document.getElementById('admin-connection-status').innerHTML = '🟢 Live';
         socket.emit('request_leaderboard');
+
+        // Request current stats to get lock state
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => updateLockButton(data.players_locked));
     });
 
     socket.on('disconnect', function() {
@@ -97,6 +104,16 @@
         teams = data.teams;
         updateAdminTable(teams);
         updateStats(teams);
+    });
+
+    socket.on('player_lock_changed', function(data) {
+        playersLocked = data.locked;
+        updateLockButton(data.locked);
+    });
+
+    socket.on('team_lock_changed', function(data) {
+        // Refresh the admin table to show updated lock states
+        socket.emit('request_leaderboard');
     });
 
     socket.on('team_deleted', function(data) {
@@ -119,20 +136,28 @@
         } else {
             teams.forEach(team => {
                 const row = document.createElement('tr');
+                const lockStatus = team.is_locked ? 'locked' : 'unlocked';
+                const lockButton = team.is_locked
+                    ? `<button class="btn btn-small btn-secondary unlock-team-btn" data-team-id="${team.id}">🔓 Unlock</button>`
+                    : `<button class="btn btn-small btn-danger lock-team-btn" data-team-id="${team.id}">🔒 Lock</button>`;
+
                 row.innerHTML = `
                     <td>${team.id}</td>
                     <td class="editable-name" data-team-id="${team.id}">${escapeHtml(team.name)}</td>
                     <td class="editable-score" data-team-id="${team.id}">${formatScore(team.score)}</td>
                     <td class="actions">
-                        <button class="btn btn-small btn-primary" data-team-id="${team.id}" data-team-name="${escapeHtml(team.name)}" data-team-score="${team.score}">✏️ Edit</button>
-                        <button class="btn btn-small btn-danger" data-team-id="${team.id}">🗑️ Delete</button>
+                        <button class="btn btn-small btn-primary edit-team-btn" data-team-id="${team.id}" data-team-name="${escapeHtml(team.name)}" data-team-score="${team.score}">✏️ Edit</button>
+                        ${lockButton}
+                        <button class="btn btn-small btn-danger delete-team-btn" data-team-id="${team.id}">🗑️ Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
 
                 // Add event listeners for the buttons
-                const editBtn = row.querySelector('.btn-primary');
-                const deleteBtn = row.querySelector('.btn-danger');
+                const editBtn = row.querySelector('.edit-team-btn');
+                const deleteBtn = row.querySelector('.delete-team-btn');
+                const lockBtn = row.querySelector('.lock-team-btn');
+                const unlockBtn = row.querySelector('.unlock-team-btn');
 
                 editBtn.addEventListener('click', function() {
                     const teamId = this.getAttribute('data-team-id');
@@ -145,12 +170,47 @@
                     const teamId = this.getAttribute('data-team-id');
                     deleteTeam(teamId);
                 });
+
+                if (lockBtn) {
+                    lockBtn.addEventListener('click', function() {
+                        const teamId = this.getAttribute('data-team-id');
+                        toggleTeamLock(teamId, true);
+                    });
+                }
+
+                if (unlockBtn) {
+                    unlockBtn.addEventListener('click', function() {
+                        const teamId = this.getAttribute('data-team-id');
+                        toggleTeamLock(teamId, false);
+                    });
+                }
             });
         }
     }
 
     function updateStats(teams) {
         document.getElementById('team-count').textContent = `${teams.length} team${teams.length !== 1 ? 's' : ''}`;
+    }
+
+    function updateLockButton(locked) {
+        playersLocked = locked;
+        const lockBtn = document.getElementById('lock-toggle-btn');
+        if (locked) {
+            lockBtn.innerHTML = '🔒 Unlock Players';
+            lockBtn.className = 'btn btn-danger';
+        } else {
+            lockBtn.innerHTML = '🔓 Lock Players';
+            lockBtn.className = 'btn btn-secondary';
+        }
+    }
+
+    function togglePlayerLock() {
+        const newLockState = !playersLocked;
+        socket.emit('toggle_player_lock', { locked: newLockState });
+    }
+
+    function toggleTeamLock(teamId, locked) {
+        socket.emit('toggle_team_lock', { team_id: teamId, locked: locked });
     }
 
     function editTeam(teamId, teamName, score) {
@@ -193,6 +253,7 @@
 
     document.getElementById('clear-all-btn').addEventListener('click', clearAllTeams);
     document.getElementById('export-btn').addEventListener('click', exportData);
+    document.getElementById('lock-toggle-btn').addEventListener('click', togglePlayerLock);
 
     // Modal handling
     document.getElementById('edit-form').addEventListener('submit', function(e) {

@@ -21,10 +21,17 @@ def init_database():
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             score REAL DEFAULT 0,
+            is_locked BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Add is_locked column if it doesn't exist
+    try:
+        conn.execute('ALTER TABLE teams ADD COLUMN is_locked BOOLEAN DEFAULT 0')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Migrate existing tables to support decimal scores
     try:
@@ -64,17 +71,24 @@ def init_database():
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             is_active BOOLEAN DEFAULT 0,
+            players_locked BOOLEAN DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Add players_locked column if it doesn't exist
+    try:
+        conn.execute('ALTER TABLE games ADD COLUMN players_locked BOOLEAN DEFAULT 0')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Create a default game if none exists
     existing_game = conn.execute('SELECT COUNT(*) as count FROM games').fetchone()
     if existing_game['count'] == 0:
         game_id = str(uuid.uuid4())
         conn.execute(
-            'INSERT INTO games (id, name, is_active) VALUES (?, ?, ?)',
-            (game_id, 'Birthday Game', 1)
+            'INSERT INTO games (id, name, is_active, players_locked) VALUES (?, ?, ?, ?)',
+            (game_id, 'Birthday Game', 1, 0)
         )
 
     conn.commit()
@@ -247,6 +261,44 @@ def backup_database(backup_path=None):
         return backup_path
     return None
 
+def are_players_locked():
+    """Check if players are locked from updating scores."""
+    conn = get_db_connection()
+    game = conn.execute('SELECT players_locked FROM games WHERE is_active = 1 LIMIT 1').fetchone()
+    conn.close()
+    return bool(game['players_locked']) if game else False
+
+def set_players_locked(locked):
+    """Set the players locked state."""
+    conn = get_db_connection()
+    cursor = conn.execute(
+        'UPDATE games SET players_locked = ? WHERE is_active = 1',
+        (1 if locked else 0,)
+    )
+    updated = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
+
+def is_team_locked(team_id):
+    """Check if a specific team is locked."""
+    conn = get_db_connection()
+    team = conn.execute('SELECT is_locked FROM teams WHERE id = ?', (team_id,)).fetchone()
+    conn.close()
+    return bool(team['is_locked']) if team else False
+
+def set_team_locked(team_id, locked):
+    """Set the locked state for a specific team."""
+    conn = get_db_connection()
+    cursor = conn.execute(
+        'UPDATE teams SET is_locked = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        (1 if locked else 0, team_id)
+    )
+    updated = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
+
 def get_database_stats():
     """Get database statistics."""
     conn = get_db_connection()
@@ -256,6 +308,7 @@ def get_database_stats():
     avg_score = conn.execute('SELECT AVG(score) as avg FROM teams').fetchone()['avg'] or 0
 
     top_team = conn.execute('SELECT name, score FROM teams ORDER BY score DESC LIMIT 1').fetchone()
+    players_locked = conn.execute('SELECT players_locked FROM games WHERE is_active = 1 LIMIT 1').fetchone()
 
     conn.close()
 
@@ -263,7 +316,8 @@ def get_database_stats():
         'team_count': team_count,
         'total_score': total_score,
         'average_score': round(avg_score, 2),
-        'top_team': dict(top_team) if top_team else None
+        'top_team': dict(top_team) if top_team else None,
+        'players_locked': bool(players_locked['players_locked']) if players_locked else False
     }
 
 # Initialize database when module is imported
