@@ -45,6 +45,18 @@ def scan():
 @app.route('/join')
 def join():
     """Join game page for players."""
+    # Check if user already has a team in session
+    team_id = session.get('team_id')
+    if team_id:
+        # Verify team still exists
+        team = db.get_team_by_id(team_id)
+        if team:
+            # User has an active team, render page with team data
+            return render_template('join.html', existing_team=team)
+        else:
+            # Team was deleted, clear session
+            session.pop('team_id', None)
+
     return render_template('join.html')
 
 @app.route('/admin')
@@ -131,6 +143,17 @@ def handle_request_leaderboard():
 @socketio.on('join_game')
 def handle_join_game(data):
     """Handle player joining the game."""
+    # Check if user already has a team in session
+    existing_team_id = session.get('team_id')
+    if existing_team_id:
+        existing_team = db.get_team_by_id(existing_team_id)
+        if existing_team:
+            emit('error', {'message': 'You already have a team! Please refresh the page.'})
+            return
+        else:
+            # Team was deleted, clear session
+            session.pop('team_id', None)
+
     team_name = data.get('team_name', '').strip()
 
     if not team_name:

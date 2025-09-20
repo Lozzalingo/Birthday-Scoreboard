@@ -73,8 +73,8 @@
 {% block scripts %}
 <script>
     const socket = io();
-    let playerTeamId = null;
-    let currentTeam = null;
+    let playerTeamId = {% if existing_team %}{{ existing_team.id }}{% else %}null{% endif %};
+    let currentTeam = {% if existing_team %}{{ existing_team | tojson }}{% else %}null{% endif %};
 
     // Fetch current team from server session
     async function fetchMyTeam() {
@@ -111,17 +111,28 @@
 
     // On page load, check if user already has a team
     window.addEventListener('load', function() {
-        fetchMyTeam().then(team => {
-            if (team) {
-                console.log('Page load - found team:', team);
-                // Hide join form immediately and show controls
-                document.getElementById('join-form').style.display = 'none';
-                document.getElementById('player-controls').style.display = 'block';
-                // Populate form with team data
-                document.getElementById('current-team-name').value = team.name;
-                document.getElementById('current-score').value = team.score;
-            }
-        });
+        if (currentTeam) {
+            console.log('Page load - server provided existing team:', currentTeam);
+            // Hide join form immediately and show controls
+            document.getElementById('join-form').style.display = 'none';
+            document.getElementById('player-controls').style.display = 'block';
+            // Populate form with team data
+            document.getElementById('current-team-name').value = currentTeam.name;
+            document.getElementById('current-score').value = currentTeam.score;
+        } else {
+            // Fallback: check via API
+            fetchMyTeam().then(team => {
+                if (team) {
+                    console.log('Page load - API found team:', team);
+                    // Hide join form immediately and show controls
+                    document.getElementById('join-form').style.display = 'none';
+                    document.getElementById('player-controls').style.display = 'block';
+                    // Populate form with team data
+                    document.getElementById('current-team-name').value = team.name;
+                    document.getElementById('current-score').value = team.score;
+                }
+            });
+        }
     });
 
     socket.on('team_joined', function(data) {
