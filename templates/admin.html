@@ -124,11 +124,27 @@
                     <td class="editable-name" data-team-id="${team.id}">${escapeHtml(team.name)}</td>
                     <td class="editable-score" data-team-id="${team.id}">${formatScore(team.score)}</td>
                     <td class="actions">
-                        <button class="btn btn-small btn-primary" onclick="editTeam(${team.id}, '${escapeHtml(team.name)}', ${team.score})">✏️ Edit</button>
-                        <button class="btn btn-small btn-danger" onclick="deleteTeam(${team.id})">🗑️ Delete</button>
+                        <button class="btn btn-small btn-primary" data-team-id="${team.id}" data-team-name="${escapeHtml(team.name)}" data-team-score="${team.score}">✏️ Edit</button>
+                        <button class="btn btn-small btn-danger" data-team-id="${team.id}">🗑️ Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
+
+                // Add event listeners for the buttons
+                const editBtn = row.querySelector('.btn-primary');
+                const deleteBtn = row.querySelector('.btn-danger');
+
+                editBtn.addEventListener('click', function() {
+                    const teamId = this.getAttribute('data-team-id');
+                    const teamName = this.getAttribute('data-team-name');
+                    const teamScore = this.getAttribute('data-team-score');
+                    editTeam(teamId, teamName, teamScore);
+                });
+
+                deleteBtn.addEventListener('click', function() {
+                    const teamId = this.getAttribute('data-team-id');
+                    deleteTeam(teamId);
+                });
             });
         }
     }
