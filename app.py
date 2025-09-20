@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, session, jsonify, url_for, send_file
 from flask_socketio import SocketIO, emit, disconnect
-from flask_session import Session
 import qrcode
 import io
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
 import database as db
 
@@ -12,18 +11,8 @@ import database as db
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(16)
 
-# Configure persistent sessions
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_FILE_DIR'] = os.path.join(os.path.dirname(__file__), 'sessions')
-app.config['SESSION_FILE_THRESHOLD'] = 500
-
-# Create sessions directory if it doesn't exist
-os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
-
-# Initialize Flask-Session
-Session(app)
+# Configure longer session lifetime (24 hours)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 # Initialize SocketIO with CORS enabled
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
@@ -166,7 +155,8 @@ def handle_join_game(data):
             emit('error', {'message': 'Failed to create team. Please try again.'})
             return
 
-        # Store team ID in session
+        # Store team ID in session and make it permanent
+        session.permanent = True
         session['team_id'] = team['id']
 
         # Emit success to joining client
